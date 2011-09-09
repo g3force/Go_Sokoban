@@ -35,6 +35,8 @@ func GetPath() []int {
 // run the algo by calling Step(), print some output and catch if won.
 func Run(single bool, outputFreq int) {
 	Init()
+	MarkDeadFields()
+	Print()
 	j := 0
 	steps := 0
 	solutions := 0
@@ -96,7 +98,7 @@ func Step() (hasMoved bool, finished bool) {
 			I("Try moving in dir=%d", getLastPath())
 			moved, boxMoved := Move(getLastPath())
 			if moved {
-				if (boxMoved && !deadEnd(addPoints(GetFigPos(), Direction(getLastPath())))) || !boxMoved {
+				if boxMoved || !boxMoved {
 					newHist := GetBoxesAndX() // TODO improve this?
 					hit := false
 					for i := 0; i < len(history); i++ {
@@ -130,14 +132,13 @@ func Step() (hasMoved bool, finished bool) {
 	return
 }
 
-// check, if specified box is in a deadEnd
-func deadEnd(box Point) bool {
+func DeadEnd(box Point) (found bool, x int) {
 	var p Point
 	hit := false
-	x := 0
-
+	x = 0
+	found = false
 	if Surface[box.Y][box.X].point {
-		return false
+		return
 	}
 
 	for i := 0; i < 5; i++ {
@@ -146,7 +147,8 @@ func deadEnd(box Point) bool {
 		//		D("%t, p=%d, box=%d", !IsInSurface(p), p, box)
 		if !IsInSurface(p) || Surface[p.Y][p.X].wall {
 			if hit {
-				return true
+				found = true
+				return
 			} else {
 				hit = true
 			}
@@ -154,8 +156,7 @@ func deadEnd(box Point) bool {
 			hit = false
 		}
 	}
-
-	return false
+	return
 }
 
 // check, if a and b are equal
