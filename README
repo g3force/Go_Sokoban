@@ -9,10 +9,14 @@ http://code.google.com/p/godag/
 3. optional: gedit plugin
 http://go-lang.cat-v.org/text-editors/gedit/
 
-How can you run it?
+<b>How can you run it?</b>
 compile with godag in project folder: gd -o sokoban
-run: ./sokoban [-l <levelfile>] [-r] [-m] [-i]
+run: ./sokoban [-r] [-m] [-i] [-s] [-l <levelfile>] [-f <outputFrequency>] [-d <debuglevel>]
 -r to directly run the algorithm
 -m for finding more than one solution
 -i for information
-order of parameters does not matter
+-s for straightAhead
+-l for levelfile
+-f for outputFrequency
+-d for debuglevel
+the order of parameters does not matter

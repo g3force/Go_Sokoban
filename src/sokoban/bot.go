@@ -5,22 +5,25 @@ import (
 	"syscall"
 )
 
+// indicates the direction, that the figure moves to 
+// and counts the number of rotations
 type DirType struct {
 	counter int
-	dir int
+	dir     int
 }
 
 var (
-	path    = []DirType{}
-	history = [][]Point{}
-	StraightAhead bool
+	path          = []DirType{} // direction path (which directions the figure has taken yet)
+	history       = [][]Point{} // history with collection of all points and figure
+	StraightAhead bool          // true: new direction are initialized with current dir, false: init with 0
 )
 
 func Init() {
-	path = []DirType{{-1,-1}}
+	path = []DirType{{-1, -1}}
 	history = [][]Point{GetBoxesAndX()}
 }
 
+// return only dir from path
 func GetPath() []int {
 	pa := []int{}
 	for i := 0; i < len(path); i++ {
@@ -29,7 +32,8 @@ func GetPath() []int {
 	return pa
 }
 
-func Run(single bool) {
+// run the algo by calling Step(), print some output and catch if won.
+func Run(single bool, outputFreq int) {
 	Init()
 	j := 0
 	steps := 0
@@ -40,6 +44,7 @@ func Run(single bool) {
 
 	for {
 		moved, finished := Step()
+		// finished indicates, that all possibilities were tried
 		if finished {
 			break
 		}
@@ -53,14 +58,14 @@ func Run(single bool) {
 				break
 			}
 		}
-		if j == 0 && steps%5000 == 0 {
+		if j == 0 && steps%outputFreq == 0 {
 			min, sec, µsec := getTimePassed(starttime)
-			D("Steps: %d; %dmin, %dsec, %dµsec", steps, min, sec, µsec)
+			D("Steps: %d; %4dm %2ds %6dµs", steps, min, sec, µsec)
 		}
 		if Won() {
 			solutions++
 			min, sec, µsec := getTimePassed(starttime)
-			fmt.Printf("%d. solution found after %d steps, %4dm %2ds %6dµs.\nPath: %d\n", solutions, steps, min, sec, µsec, path)
+			fmt.Printf("%d. solution found after %d steps, %4dm %2ds %6dµs.\nPath: %d\n", solutions, steps, min, sec, µsec, GetPath())
 			Print()
 			UndoStep()
 			rmLastPath()
@@ -82,8 +87,8 @@ func Step() (hasMoved bool, finished bool) {
 		finished = true
 		return
 	} else {
-		incLastPath()
-		if getLastCounter() > 3{
+		incLastPath() // first of all: increase the last path to try the next possibility
+		if getLastCounter() > 3 {
 			I("Rotation finished. Deadlock. Backtrack.")
 			UndoStep()
 			rmLastPath()
@@ -92,7 +97,7 @@ func Step() (hasMoved bool, finished bool) {
 			moved, boxMoved := Move(getLastPath())
 			if moved {
 				if (boxMoved && !deadEnd(addPoints(GetFigPos(), Direction(getLastPath())))) || !boxMoved {
-					newHist := GetBoxesAndX()
+					newHist := GetBoxesAndX() // TODO improve this?
 					hit := false
 					for i := 0; i < len(history); i++ {
 						if sameFields(history[i], newHist) {
@@ -105,7 +110,7 @@ func Step() (hasMoved bool, finished bool) {
 					if !hit {
 						history = append(history, newHist)
 						if StraightAhead {
-							addToPath(getLastPath()-1)
+							addToPath(getLastPath() - 1)
 						} else {
 							addToPath(-1)
 						}
@@ -125,6 +130,7 @@ func Step() (hasMoved bool, finished bool) {
 	return
 }
 
+// check, if specified box is in a deadEnd
 func deadEnd(box Point) bool {
 	var p Point
 	hit := false
@@ -152,6 +158,7 @@ func deadEnd(box Point) bool {
 	return false
 }
 
+// check, if a and b are equal
 func sameFields(a []Point, b []Point) bool {
 	if len(a) != len(b) {
 		return false
@@ -173,13 +180,13 @@ func getLastPath() int {
 
 func incLastPath() {
 	path[len(path)-1].dir++
-	if path[len(path)-1].dir==4 {
+	if path[len(path)-1].dir == 4 {
 		path[len(path)-1].dir = 0
 	}
 	path[len(path)-1].counter++
 }
 
-func getLastCounter() int{
+func getLastCounter() int {
 	if len(path) > 0 {
 		return path[len(path)-1].counter
 	}
@@ -206,6 +213,7 @@ func abs(a int) int {
 	return a
 }
 
+// return min, sec and µsec since specified starttime
 func getTimePassed(starttime syscall.Timeval) (min, sec, µsec int) {
 	var time syscall.Timeval
 	syscall.Gettimeofday(&time)
