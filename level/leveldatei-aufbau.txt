@@ -1,0 +1,57 @@
+//Hier steht alles, was für das erstellen eines Levels nötig ist.
+//Theoretisch kann diese Datei als .lev datei genutzt werden,
+//da alle informationen da sind und das Format stimmt.
+
+//Zeilen, die mit "//" beginnen, und leere Zeilen werden ignoriert.
+
+
+//Zeilen, die ein "=" enthalten, werden folgendermaßen ausgewertet:
+//alles, was vor dem "=" steht ist der Schlüssel, der Teil danach der Wert.
+//Ist der Schlüssel gültig, sprich einer der unten stehenden Schlüssel,
+//so wird der entsprechende Wert übergeben.
+//Die Reihenfolge ist egal. Das Spielfeld muss auch nicht am Ende definiert sein.
+
+
+//Name des Ordners in "Bilder/", der zur Darstellung der Icons benutzt werden soll:
+dir=25
+
+//Autor:
+autor=Nicolai Ommer
+
+//Gueltigkeitscode (wird automatisch eingetragen,
+//sobald das Level einmal erfolgreich gewonnen wurde):
+validatecode=
+
+//Version des Levels:
+version=1.0
+
+//Titel des Levels:
+titel=Labyrint
+
+//Beschreibung des Levels:
+discription=Ein kleines, aber leichtes Labyrint.
+
+//Spielfeld:
+//Folgende Symbole sind möglich:
+
+//Wand:  	   #
+//Punkt: 	   .
+//Kiste: 	   $
+//Kiste-auf-Punkt: *
+//Figur: 	   @
+//Figur-auf-Punkt: +
+
+//So wird der Levelaufbau definiert:
+//(jede Zeile muss mit # beginnen!!)
+#############################################
+####.#.######.#####      ####.###       #.###
+#### # ######$$                           ###
+#### #        $     ######### ######### # ###
+#### # ##### $ #### #####  ## ######### # ###
+#### # #####  ###.# # $    ## $    .### # ###
+#    #    ### ### #$# #### ###### ####  # ###
+# ## #### ##  ### # #  ###.        ###  . ###
+# $@          ###$# ## ######## $$ #### #####
+####   #####   .       ########.        #####
+#################################       #####
+#############################################

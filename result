@@ -1,0 +1,55 @@
+##################### V1 - figure improvement? Not shure... ####################
+Run finished with 45328 steps.
+Path: [3 0 3 0 0 3 3 2 2 1 1 0 0 3 2 0 3 2 2 2 2 1 1 2 2 3 0 1 2 3 3 0 0 -1]
+Surface:
+# # # # # # # # # 
+#     x %       # 
+#     % # %     # 
+#       %       # 
+# # # %   % # # # 
+# # # #   # # # # 
+# # # # # # # # # 
+
+real	9m44.582s
+user	9m35.650s
+sys	0m4.030s
+
+##################### V2 - figure and points improved ##########################
+Run finished with 45328 steps.
+Path: [3 0 3 0 0 3 3 2 2 1 1 0 0 3 2 0 3 2 2 2 2 1 1 2 2 3 0 1 2 3 3 0 0 -1]
+Surface:
+# # # # # # # # # 
+#     x %       # 
+#     % # %     # 
+#       %       # 
+# # # %   % # # # 
+# # # #   # # # # 
+# # # # # # # # # 
+
+real	10m8.624s
+user	10m0.460s
+sys	0m3.310s
+
+Run finished with 45328 steps.
+Path: [3 0 3 0 0 3 3 2 2 1 1 0 0 3 2 0 3 2 2 2 2 1 1 2 2 3 0 1 2 3 3 0 0 -1]
+Surface:
+# # # # # # # # # 
+#     x %       # 
+#     % # %     # 
+#       %       # 
+# # # %   % # # # 
+# # # #   # # # # 
+# # # # # # # # # 
+
+real	9m47.024s
+user	9m32.420s
+sys	0m6.220s
+
+###################### V3 - deadStop() #########################################
+Run finished with 45328 steps.
+0 solutions found at following steps:
+[]
+
+real	9m19.739s
+user	9m17.410s
+sys	0m0.600s
