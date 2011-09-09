@@ -248,6 +248,20 @@ func GetSimpleSurface() (result [][]int8) {
 	return
 }
 
+func GetBoxesAndX() (field []Point){
+	field = append(field, figPos)
+	temp := 0
+	for y := 0; y < len(Surface); y++ {
+		for x := 0; x < len(Surface[y]); x++ {
+			if Surface[y][x].contain==BOX {
+				field = append(field, Point{x, y})
+				temp++
+			}
+		}
+	}
+	return	
+}
+
 func PrintInfo() {
 	fmt.Println("Surface Field association:")
 	fmt.Printf("EMPTY\t\t' '\n")
