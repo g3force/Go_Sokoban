@@ -12,6 +12,7 @@ func main() {
 	runmode := false
 	single := true
 	level := "level1"
+	sokoban.StraightAhead = false
 
 	if len(os.Args) > 1 {
 		for i, _ := range os.Args {
@@ -33,6 +34,8 @@ func main() {
 						sokoban.DebugLevel = debuglevel
 					}
 				}
+			case "-s":
+				sokoban.StraightAhead = true
 			}
 		}
 	}

@@ -5,18 +5,28 @@ import (
 	"syscall"
 )
 
+type DirType struct {
+	counter int
+	dir int
+}
+
 var (
-	path    = []int{-1}
+	path    = []DirType{}
 	history = [][]Point{}
+	StraightAhead bool
 )
 
 func Init() {
-	path = []int{-1}
+	path = []DirType{{-1,-1}}
 	history = [][]Point{GetBoxesAndX()}
 }
 
 func GetPath() []int {
-	return path
+	pa := []int{}
+	for i := 0; i < len(path); i++ {
+		pa = append(pa, path[i].dir)
+	}
+	return pa
 }
 
 func Run(single bool) {
@@ -73,7 +83,7 @@ func Step() (hasMoved bool, finished bool) {
 		return
 	} else {
 		incLastPath()
-		if getLastPath() > 3 {
+		if getLastCounter() > 3{
 			I("Rotation finished. Deadlock. Backtrack.")
 			UndoStep()
 			rmLastPath()
@@ -94,7 +104,11 @@ func Step() (hasMoved bool, finished bool) {
 					}
 					if !hit {
 						history = append(history, newHist)
-						addToPath(-1)
+						if StraightAhead {
+							addToPath(getLastPath()-1)
+						} else {
+							addToPath(-1)
+						}
 						I("Moved. Path added.")
 						hasMoved = true
 					}
@@ -152,13 +166,24 @@ func sameFields(a []Point, b []Point) bool {
 
 func getLastPath() int {
 	if len(path) > 0 {
-		return path[len(path)-1]
+		return path[len(path)-1].dir
 	}
 	return -1
 }
 
 func incLastPath() {
-	path[len(path)-1]++
+	path[len(path)-1].dir++
+	if path[len(path)-1].dir==4 {
+		path[len(path)-1].dir = 0
+	}
+	path[len(path)-1].counter++
+}
+
+func getLastCounter() int{
+	if len(path) > 0 {
+		return path[len(path)-1].counter
+	}
+	return -1
 }
 
 func rmLastPath() {
@@ -171,7 +196,7 @@ func rmLastPath() {
 }
 
 func addToPath(dir int) {
-	path = append(path, dir)
+	path = append(path, DirType{-1, dir})
 }
 
 func abs(a int) int {
