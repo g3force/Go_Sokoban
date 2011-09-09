@@ -7,12 +7,12 @@ import (
 
 var (
 	path    = []int{-1}
-	history = [][][]int8{}
+	history = [][]Point{}
 )
 
 func Init() {
 	path = []int{-1}
-	history = [][][]int8{GetSimpleSurface()}
+	history = [][]Point{GetBoxesAndX()}
 }
 
 func GetPath() []int {
@@ -82,7 +82,7 @@ func Step() (hasMoved bool, finished bool) {
 			moved, boxMoved := Move(getLastPath())
 			if moved {
 				if (boxMoved && !deadEnd(addPoints(GetFigPos(), Direction(getLastPath())))) || !boxMoved {
-					newHist := GetSimpleSurface()
+					newHist := GetBoxesAndX()
 					hit := false
 					for i := 0; i < len(history); i++ {
 						if sameFields(history[i], newHist) {
@@ -138,18 +138,13 @@ func deadEnd(box Point) bool {
 	return false
 }
 
-func sameFields(a [][]int8, b [][]int8) bool {
+func sameFields(a []Point, b []Point) bool {
 	if len(a) != len(b) {
 		return false
 	}
 	for y := 0; y < len(a); y++ {
-		if len(a[y]) != len(b[y]) {
+		if a[y].X != b[y].X || a[y].Y != b[y].Y {
 			return false
-		}
-		for x := 0; x < len(a[y]); x++ {
-			if a[y][x] != b[y][x] {
-				return false
-			}
 		}
 	}
 	return true
