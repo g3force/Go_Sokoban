@@ -29,7 +29,7 @@ func main() {
 			case "-d":
 				if len(os.Args) > i+1 {
 					debuglevel, err := strconv.Atoi(os.Args[i+1])
-					if err == nil {
+					if err == "" {
 						sokoban.DebugLevel = debuglevel
 					}
 				}
