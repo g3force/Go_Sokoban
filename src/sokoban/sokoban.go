@@ -83,6 +83,10 @@ func Move(dir int) (success bool, boxMoved bool) {
 			I("Can not move: blocked box (surface border)")
 			return
 		}
+		if Surface[nnf.Y][nnf.X].dead{
+			I("Can not move: Dead field")
+			return
+		}
 		if Surface[nnf.Y][nnf.X].wall || Surface[nnf.Y][nnf.X].contain != EMPTY {
 			I("Can not move: blocked box")
 			return
@@ -208,6 +212,8 @@ func Print() {
 		for x := 0; x < len(Surface[y]); x++ {
 			if Surface[y][x].wall {
 				fmt.Print("#")
+			} else if Surface[y][x].dead {
+				fmt.Print("☠")
 			} else if Surface[y][x].point {
 				switch Surface[y][x].contain {
 				case EMPTY:
