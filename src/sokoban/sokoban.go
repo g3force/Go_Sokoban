@@ -6,25 +6,30 @@ import (
 	"strings"
 )
 
+// constants for displaying and saving the surface
 const GROUND = 8
 const WALL = 9
 const POINT = 10
 
+// constants for indicating what a field "contains"
 const EMPTY = 0
 const BOX = 1
 const FIGURE = 2
 
+// simple Point type
 type Point struct {
 	X int
 	Y int
 }
 
+// History Type for saving a change after a move
 type HistoryType struct {
 	OldPos   Point
 	NewPos   Point
 	BoxMoved bool
 }
 
+// single field within the surface
 type Field struct {
 	wall    bool
 	point   bool
@@ -32,22 +37,11 @@ type Field struct {
 }
 
 var (
-	Surface [][]Field
+	Surface [][]Field // the current Surface
 	History []HistoryType
 	figPos  Point
 	points  []Point
 )
-
-//func (h *HistoryType) String() string {
-//	result := string(h.OldPos.X) + ";" + string(h.OldPos.Y) + " "
-//	result += string(h.NewPos.X) + ";" + string(h.NewPos.Y) + " "
-//	if h.BoxMoved {
-//		result += "t"
-//	} else {
-//		result += "f"
-//	}
-//	return result
-//}
 
 func Direction(dir int) Point {
 	dir = dir % 4
