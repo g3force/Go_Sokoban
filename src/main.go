@@ -11,6 +11,7 @@ func main() {
 	runmode := false
 	single := true
 	level := "level1"
+	sokoban.StraightAhead = false 
 
 	if len(os.Args) > 1 {
 		for i, _ := range os.Args {
@@ -26,6 +27,8 @@ func main() {
 				sokoban.PrintInfo()
 			case "-m":
 				single = false
+			case "-s":
+				sokoban.StraightAhead = true
 			}
 		}
 	}

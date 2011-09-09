@@ -28,6 +28,7 @@ type HistoryType struct {
 type Field struct {
 	wall    bool
 	point   bool
+	dead	bool
 	contain int
 }
 
@@ -168,19 +169,19 @@ func LoadLevel(filename string) {
 		for x, char := range line {
 			switch char {
 			case '#':
-				field = Field{true, false, EMPTY}
+				field = Field{true, false, false, EMPTY}
 			case ' ':
-				field = Field{false, false, EMPTY}
+				field = Field{false, false, false, EMPTY}
 			case '$':
-				field = Field{false, false, BOX}
+				field = Field{false, false, false, BOX}
 			case '@':
-				field = Field{false, false, FIGURE}
+				field = Field{false, false, false, FIGURE}
 			case '.':
-				field = Field{false, true, EMPTY}
+				field = Field{false, true, false, EMPTY}
 			case '*':
-				field = Field{false, true, BOX}
+				field = Field{false, true, false, BOX}
 			case '+':
-				field = Field{false, true, FIGURE}
+				field = Field{false, true, false, FIGURE}
 			default:
 				E("Unknown character in level file: '%c'", char)
 			}
@@ -238,21 +239,6 @@ func Print() {
 	}
 }
 
-func GetSimpleSurface() (result [][]int8) {
-	for y := 0; y < len(Surface); y++ {
-		result = append(result, []int8{})
-		for x := 0; x < len(Surface[y]); x++ {
-			if Surface[y][x].wall {
-				result[y] = append(result[y], int8(WALL))
-			} else if Surface[y][x].point {
-				result[y] = append(result[y], int8(Surface[y][x].contain+5))
-			} else {
-				result[y] = append(result[y], int8(Surface[y][x].contain))
-			}
-		}
-	}
-	return
-}
 
 func GetBoxesAndX() (field []Point){
 	field = append(field, figPos)
