@@ -62,7 +62,7 @@ func Run(single bool, outputFreq int) {
 		}
 		if j == 0 && steps%outputFreq == 0 {
 			min, sec, µsec := getTimePassed(starttime)
-			D("Steps: %d; %4dm %2ds %6dµs", steps, min, sec, µsec)
+			D("Steps: %6d; %4dm %2ds %6dµs", steps, min, sec, µsec)
 		}
 		if Won() {
 			solutions++
