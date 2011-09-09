@@ -1,0 +1,18 @@
+This project implements the common game sokoban with Go.
+There is no GUI, but only text output and input.
+
+What is needed?
+1. golang -> language with compiler
+http://golang.org/doc/install.html
+2. optional: godag -> dynamic,advanced compiler
+http://code.google.com/p/godag/
+3. optional: gedit plugin
+http://go-lang.cat-v.org/text-editors/gedit/
+
+How can you run it?
+compile with godag in project folder: gd -o sokoban
+run: ./sokoban [-l <levelfile>] [-r] [-m] [-i]
+-r to directly run the algorithm
+-m for finding more than one solution
+-i for information
+order of parameters does not matter
