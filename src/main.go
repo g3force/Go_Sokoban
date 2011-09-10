@@ -14,6 +14,7 @@ func main() {
 	level := "level1"
 	sokoban.StraightAhead = false
 	outputFreq := 5000
+	printSurface := false
 
 	if len(os.Args) > 1 {
 		for i, _ := range os.Args {
@@ -44,6 +45,8 @@ func main() {
 						outputFreq = of
 					}
 				}
+			case "-p":
+				printSurface = true
 			}
 		}
 	}
@@ -53,7 +56,7 @@ func main() {
 	sokoban.Print()
 
 	if runmode {
-		sokoban.Run(single, outputFreq)
+		sokoban.Run(single, outputFreq, printSurface)
 		return
 	}
 
@@ -63,7 +66,7 @@ func main() {
 		fmt.Print("Press m for manual or r for run: ")
 		fmt.Scanf("%s", &choice)
 		if choice == "r" {
-			sokoban.Run(single, outputFreq)
+			sokoban.Run(single, outputFreq, printSurface)
 			break
 		} else if choice == "m" {
 			fmt.Println("Manual mode")

@@ -33,9 +33,10 @@ func GetPath() []int {
 }
 
 // run the algo by calling Step(), print some output and catch if won.
-func Run(single bool, outputFreq int) {
+func Run(single bool, outputFreq int, printSurface bool) {
 	Init()
 	MarkDeadFields()
+	fmt.Println()
 	Print()
 	j := 0
 	steps := 0
@@ -63,6 +64,9 @@ func Run(single bool, outputFreq int) {
 		if j == 0 && steps%outputFreq == 0 {
 			min, sec, µsec := getTimePassed(starttime)
 			D("Steps: %6d; %4dm %2ds %6dµs", steps, min, sec, µsec)
+			if printSurface {
+				Print()
+			}
 		}
 		if Won() {
 			solutions++
@@ -129,33 +133,6 @@ func Step() (hasMoved bool, finished bool) {
 		}
 	}
 	I("End Step. Path: %d", path)
-	return
-}
-
-func DeadEnd(box Point) (found bool, x int) {
-	var p Point
-	hit := false
-	x = 0
-	found = false
-	if Surface[box.Y][box.X].point {
-		return
-	}
-
-	for i := 0; i < 5; i++ {
-		x = i % 4
-		p = addPoints(box, Direction(x))
-		//		D("%t, p=%d, box=%d", !IsInSurface(p), p, box)
-		if !IsInSurface(p) || Surface[p.Y][p.X].wall {
-			if hit {
-				found = true
-				return
-			} else {
-				hit = true
-			}
-		} else {
-			hit = false
-		}
-	}
 	return
 }
 

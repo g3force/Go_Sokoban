@@ -6,15 +6,8 @@ import (
 	"strings"
 )
 
-// constants for displaying and saving the surface
-const GROUND = 8
-const WALL = 9
-const POINT = 10
-
 // constants for indicating what a field "contains"
 const EMPTY = 0
-const BOX = 1
-const FIGURE = 2
 
 // simple Point type
 type Point struct {
@@ -31,10 +24,16 @@ type HistoryType struct {
 
 // single field within the surface
 type Field struct {
-	wall    bool
-	point   bool
-	dead    bool
-	contain int
+	wall  bool
+	point bool
+	dead  bool
+	box   int
+}
+
+type MovingResult struct {
+	moved    bool
+	boxMoved bool
+	box      int
 }
 
 var (
@@ -42,6 +41,7 @@ var (
 	History []HistoryType // history, indicating the past way
 	figPos  Point         // current position of figure
 	points  []Point       // Array of all points
+	boxes   []Point
 )
 
 // convert direction from int to Point
@@ -82,36 +82,34 @@ func Move(dir int) (success bool, boxMoved bool) {
 	case f.wall == true:
 		I("Can not move: wall")
 		return
-	case f.contain == BOX:
+	case f.box != EMPTY: // if box
 		nnf := addPoints(nf, Direction(dir)) // potential new boxposition
 		if !IsInSurface(nnf) {
 			I("Can not move: blocked box (surface border)")
 			return
 		}
-		if Surface[nnf.Y][nnf.X].dead{
+		if Surface[nnf.Y][nnf.X].dead {
 			I("Can not move: Dead field")
 			return
 		}
-		if Surface[nnf.Y][nnf.X].wall || Surface[nnf.Y][nnf.X].contain != EMPTY {
+		if Surface[nnf.Y][nnf.X].wall || Surface[nnf.Y][nnf.X].box != EMPTY {
 			I("Can not move: blocked box")
 			return
 		}
 		I("Move box")
 		boxMoved = true
-		Surface[nnf.Y][nnf.X].contain = Surface[nf.Y][nf.X].contain
+		Surface[nnf.Y][nnf.X].box = Surface[nf.Y][nf.X].box
 		fallthrough // go to next case statment to also move the figure
-	case f.contain == EMPTY || f.contain == BOX:
+	case f.box >= EMPTY: // actually always...
 		var hist HistoryType
 		hist.NewPos = nf
 		hist.OldPos = cf
 		hist.BoxMoved = boxMoved
 		History = append(History, hist)
-		Surface[nf.Y][nf.X].contain = Surface[cf.Y][cf.X].contain
-		Surface[cf.Y][cf.X].contain = EMPTY
+		Surface[nf.Y][nf.X].box = Surface[cf.Y][cf.X].box
+		Surface[cf.Y][cf.X].box = EMPTY
 		figPos = nf // refresh figureposition
 		success = true
-	case f.contain == FIGURE:
-		E("Duplicate figures or bad direction")
 	default:
 		E("Unknown field")
 	}
@@ -122,16 +120,16 @@ func Move(dir int) (success bool, boxMoved bool) {
 func UndoStep() {
 	if len(History) > 0 {
 		history := History[len(History)-1] // get last history
-		Surface[history.OldPos.Y][history.OldPos.X].contain = Surface[history.NewPos.Y][history.NewPos.X].contain
-		Surface[history.NewPos.Y][history.NewPos.X].contain = EMPTY
+		Surface[history.OldPos.Y][history.OldPos.X].box = Surface[history.NewPos.Y][history.NewPos.X].box
+		Surface[history.NewPos.Y][history.NewPos.X].box = EMPTY
 		figPos = history.OldPos
 		// also move box back, if neccessary
 		if history.BoxMoved {
 			var boxPoint Point
 			boxPoint.X = history.NewPos.X + (history.NewPos.X - history.OldPos.X)
 			boxPoint.Y = history.NewPos.Y + (history.NewPos.Y - history.OldPos.Y)
-			Surface[history.NewPos.Y][history.NewPos.X].contain = Surface[boxPoint.Y][boxPoint.X].contain
-			Surface[boxPoint.Y][boxPoint.X].contain = EMPTY
+			Surface[history.NewPos.Y][history.NewPos.X].box = Surface[boxPoint.Y][boxPoint.X].box
+			Surface[boxPoint.Y][boxPoint.X].box = EMPTY
 		}
 		History = History[:len(History)-1] // remove from history
 	}
@@ -140,23 +138,6 @@ func UndoStep() {
 func GetFigPos() Point {
 	return figPos
 }
-
-//func Find(object int) Point {
-//	return FindNext(object, 0, 0)
-//}
-//
-//func FindNext(object int, startx int, starty int) (p Point) {
-//	for y := starty; y < len(Surface); y++ {
-//		for x := startx; x < len(Surface[y]); x++ {
-//			if Surface[y][x].contain == object {
-//				p.X = x
-//				p.Y = y
-//				return
-//			}
-//		}
-//	}
-//	return
-//}
 
 // load level from specified file (relative to binary file)
 func LoadLevel(filename string) {
@@ -169,7 +150,7 @@ func LoadLevel(filename string) {
 	Surface = [][]Field{{}}
 	var field Field
 	y := 0
-
+	boxId := 1
 	for _, line := range lines {
 		// filter empty lines and lines that do not start with '#'
 		if len(line) == 0 || line[0] != '#' {
@@ -182,16 +163,19 @@ func LoadLevel(filename string) {
 			case ' ':
 				field = Field{false, false, false, EMPTY}
 			case '$':
-				field = Field{false, false, false, BOX}
+				field = Field{false, false, false, boxId}
+				boxId++
 			case '@':
-				field = Field{false, false, false, FIGURE}
+				field = Field{false, false, false, EMPTY}
 				figPos = Point{x, y}
 			case '.':
 				field = Field{false, true, false, EMPTY}
 			case '*':
-				field = Field{false, true, false, BOX}
+				field = Field{false, true, false, boxId}
+				boxId++
 			case '+':
-				field = Field{false, true, false, FIGURE}
+				field = Field{false, true, false, EMPTY}
+				figPos = Point{x, y}
 			default:
 				E("Unknown character in level file: '%c'", char)
 			}
@@ -213,7 +197,7 @@ func LoadLevel(filename string) {
 // loop over all points and check, if there is a box. Else return false
 func Won() bool {
 	for _, p := range points {
-		if Surface[p.Y][p.X].contain != BOX {
+		if Surface[p.Y][p.X].box == EMPTY {
 			return false
 		}
 	}
@@ -224,27 +208,28 @@ func Won() bool {
 func Print() {
 	for y := 0; y < len(Surface); y++ {
 		for x := 0; x < len(Surface[y]); x++ {
-			if Surface[y][x].wall {
+			switch field := Surface[y][x]; {
+			case field.wall:
 				fmt.Print("#")
-			} else if Surface[y][x].dead {
-				fmt.Print("☠")
-			} else if Surface[y][x].point {
-				switch Surface[y][x].contain {
-				case EMPTY:
-					fmt.Print("*")
-				case BOX:
-					fmt.Print("%")
-				case FIGURE:
+			case figPos.X == x && figPos.Y == y:
+				if field.point {
 					fmt.Print("+")
-				}
-			} else {
-				switch Surface[y][x].contain {
-				case EMPTY:
-					fmt.Print(" ")
-				case BOX:
-					fmt.Print("$")
-				case FIGURE:
+				} else {
 					fmt.Print("x")
+				}
+			case field.box == EMPTY:
+				if field.point {
+					fmt.Print("*")
+				} else if field.dead {
+					fmt.Print("☠")
+				} else {
+					fmt.Print(" ")
+				}
+			default: // field has box
+				if field.point {
+					fmt.Print("%")
+				} else {
+					fmt.Print("$")
 				}
 			}
 			fmt.Print(" ")
@@ -259,7 +244,7 @@ func GetBoxesAndX() (field []Point) {
 	//	temp := 0
 	for y := 0; y < len(Surface); y++ {
 		for x := 0; x < len(Surface[y]); x++ {
-			if Surface[y][x].contain == BOX {
+			if Surface[y][x].box != EMPTY {
 				field = append(field, Point{x, y})
 				//				temp++
 			}
@@ -286,7 +271,7 @@ func CountBoxes() int {
 	count := 0
 	for y := 0; y < len(Surface); y++ {
 		for x := 0; x < len(Surface[y]); x++ {
-			if Surface[y][x].contain == BOX {
+			if Surface[y][x].box != EMPTY {
 				count++
 			}
 		}
