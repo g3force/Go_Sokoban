@@ -19,7 +19,7 @@ type Point struct {
 type HistoryType struct {
 	OldPos   Point
 	NewPos   Point
-	BoxMoved bool
+	BoxMoved int
 }
 
 // single field within the surface
@@ -37,12 +37,16 @@ type MovingResult struct {
 }
 
 var (
-	Surface [][]Field     // the current Surface
-	History []HistoryType // history, indicating the past way
-	figPos  Point         // current position of figure
-	points  []Point       // Array of all points
-	boxes   []Point
+	Surface [][]Field         // the current Surface
+	History []HistoryType     // history, indicating the past way
+	figPos  Point             // current position of figure
+	points  []Point           // Array of all points
+	boxes   = map[int]Point{} // Array of all boxes
 )
+
+func GetBoxes() map[int]Point {
+	return boxes
+}
 
 // convert direction from int to Point
 func Direction(dir int) Point {
@@ -68,9 +72,9 @@ func Direction(dir int) Point {
 /* try moving figure in specified direction.
  * Returns, if figure was moved and if figure moved a box.
  */
-func Move(dir int) (success bool, boxMoved bool) {
+func Move(dir int) (success bool, boxMoved int) {
 	success = false
-	boxMoved = false
+	boxMoved = EMPTY
 	cf := GetFigPos()                   // current figureposition
 	nf := addPoints(cf, Direction(dir)) // potential new figureposition
 	if !IsInSurface(nf) {
@@ -97,7 +101,8 @@ func Move(dir int) (success bool, boxMoved bool) {
 			return
 		}
 		I("Move box")
-		boxMoved = true
+		boxMoved = f.box
+		boxes[f.box] = nnf // nnf is position that box should move to, f.box is current box
 		Surface[nnf.Y][nnf.X].box = Surface[nf.Y][nf.X].box
 		fallthrough // go to next case statment to also move the figure
 	case f.box >= EMPTY: // actually always...
@@ -124,12 +129,13 @@ func UndoStep() {
 		Surface[history.NewPos.Y][history.NewPos.X].box = EMPTY
 		figPos = history.OldPos
 		// also move box back, if neccessary
-		if history.BoxMoved {
+		if history.BoxMoved != EMPTY {
 			var boxPoint Point
 			boxPoint.X = history.NewPos.X + (history.NewPos.X - history.OldPos.X)
 			boxPoint.Y = history.NewPos.Y + (history.NewPos.Y - history.OldPos.Y)
 			Surface[history.NewPos.Y][history.NewPos.X].box = Surface[boxPoint.Y][boxPoint.X].box
 			Surface[boxPoint.Y][boxPoint.X].box = EMPTY
+			boxes[Surface[history.NewPos.Y][history.NewPos.X].box] = history.NewPos
 		}
 		History = History[:len(History)-1] // remove from history
 	}
@@ -150,7 +156,7 @@ func LoadLevel(filename string) {
 	Surface = [][]Field{{}}
 	var field Field
 	y := 0
-	boxId := 1
+	boxId := 0
 	for _, line := range lines {
 		// filter empty lines and lines that do not start with '#'
 		if len(line) == 0 || line[0] != '#' {
@@ -163,16 +169,16 @@ func LoadLevel(filename string) {
 			case ' ':
 				field = Field{false, false, false, EMPTY}
 			case '$':
-				field = Field{false, false, false, boxId}
 				boxId++
+				field = Field{false, false, false, boxId}
 			case '@':
 				field = Field{false, false, false, EMPTY}
 				figPos = Point{x, y}
 			case '.':
 				field = Field{false, true, false, EMPTY}
 			case '*':
-				field = Field{false, true, false, boxId}
 				boxId++
+				field = Field{false, true, false, boxId}
 			case '+':
 				field = Field{false, true, false, EMPTY}
 				figPos = Point{x, y}
@@ -182,6 +188,9 @@ func LoadLevel(filename string) {
 			Surface[y] = append(Surface[y], field)
 			if field.point {
 				points = append(points, Point{x, y})
+			}
+			if field.box != EMPTY {
+				boxes[boxId] = Point{x, y}
 			}
 		}
 		y++
@@ -240,16 +249,38 @@ func Print() {
 
 // return Point array of all boxes and the figure
 func GetBoxesAndX() (field []Point) {
+	//	field = boxes
+	//	field[0] = figPos
 	field = append(field, figPos)
-	//	temp := 0
-	for y := 0; y < len(Surface); y++ {
-		for x := 0; x < len(Surface[y]); x++ {
-			if Surface[y][x].box != EMPTY {
-				field = append(field, Point{x, y})
-				//				temp++
-			}
+
+	var sort = map[int]map[int]int{}
+
+	for _, box := range boxes {
+		if sort[box.Y] == nil {
+			sort[box.Y] = map[int]int{}
+		}
+		sort[box.Y][box.X] = 0
+	}
+
+	for y, _ := range sort {
+		for x, _ := range sort[y] {
+			field = append(field, Point{x, y})
 		}
 	}
+	//	D("field: %d", field)
+
+	//	for i := 1; i < len(boxes)+1; i++ {
+	//		field = append(field, boxes[i])
+	//	}
+	//	temp := 0
+	//	for y := 0; y < len(Surface); y++ {
+	//		for x := 0; x < len(Surface[y]); x++ {
+	//			if Surface[y][x].box != EMPTY {
+	//				field = append(field, Point{x, y})
+	//				//				temp++
+	//			}
+	//		}
+	//	}
 	return
 }
 
