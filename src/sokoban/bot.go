@@ -33,9 +33,10 @@ func GetPath() []int {
 }
 
 // run the algo by calling Step(), print some output and catch if won.
-func Run(single bool, outputFreq int) {
+func Run(single bool, outputFreq int, printSurface bool) {
 	Init()
 	MarkDeadFields()
+	fmt.Println()
 	Print()
 	j := 0
 	steps := 0
@@ -60,21 +61,24 @@ func Run(single bool, outputFreq int) {
 				break
 			}
 		}
+		if printSurface {
+			Print()
+		}
 		if j == 0 && steps%outputFreq == 0 {
 			min, sec, µsec := getTimePassed(starttime)
-			D("Steps: %d; %4dm %2ds %6dµs", steps, min, sec, µsec)
+			D("Steps: %6d; %4dm %2ds %6dµs", steps, min, sec, µsec)
 		}
 		if Won() {
 			solutions++
 			min, sec, µsec := getTimePassed(starttime)
 			fmt.Printf("%d. solution found after %d steps, %4dm %2ds %6dµs.\nPath: %d\n", solutions, steps, min, sec, µsec, GetPath())
 			Print()
-			UndoStep()
-			rmLastPath()
 			solSteps = append(solSteps, steps)
 			if single {
 				break
 			}
+			UndoStep()
+			rmLastPath()
 		}
 	}
 	min, sec, µsec := getTimePassed(starttime)
@@ -96,32 +100,28 @@ func Step() (hasMoved bool, finished bool) {
 			rmLastPath()
 		} else {
 			I("Try moving in dir=%d", getLastPath())
-			moved, boxMoved := Move(getLastPath())
+			moved, _ := Move(getLastPath())
 			if moved {
-				if boxMoved || !boxMoved {
-					newHist := GetBoxesAndX() // TODO improve this?
-					hit := false
-					for i := 0; i < len(history); i++ {
-						if sameFields(history[i], newHist) {
-							I("I'v been here already. Backtrack.")
-							UndoStep()
-							hit = true
-							break
-						}
+				newHist := GetBoxesAndX() // TODO improve this?
+				//				D("hist: %d", newHist)
+				hit := false
+				for i := 0; i < len(history); i++ {
+					if sameFields(history[i], newHist) {
+						I("I'v been here already. Backtrack.")
+						UndoStep()
+						hit = true
+						break
 					}
-					if !hit {
-						history = append(history, newHist)
-						if StraightAhead {
-							addToPath(getLastPath() - 1)
-						} else {
-							addToPath(-1)
-						}
-						I("Moved. Path added.")
-						hasMoved = true
+				}
+				if !hit {
+					history = append(history, newHist)
+					if StraightAhead {
+						addToPath(getLastPath() - 1)
+					} else {
+						addToPath(-1)
 					}
-				} else {
-					I("Dead End")
-					UndoStep()
+					I("Moved. Path added.")
+					hasMoved = true
 				}
 			} else {
 				I("Could not move.")
@@ -129,33 +129,6 @@ func Step() (hasMoved bool, finished bool) {
 		}
 	}
 	I("End Step. Path: %d", path)
-	return
-}
-
-func DeadEnd(box Point) (found bool, x int) {
-	var p Point
-	hit := false
-	x = 0
-	found = false
-	if Surface[box.Y][box.X].point {
-		return
-	}
-
-	for i := 0; i < 5; i++ {
-		x = i % 4
-		p = addPoints(box, Direction(x))
-		//		D("%t, p=%d, box=%d", !IsInSurface(p), p, box)
-		if !IsInSurface(p) || Surface[p.Y][p.X].wall {
-			if hit {
-				found = true
-				return
-			} else {
-				hit = true
-			}
-		} else {
-			hit = false
-		}
-	}
 	return
 }
 
