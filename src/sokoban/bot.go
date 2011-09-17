@@ -8,8 +8,8 @@ import (
 // indicates the direction, that the figure moves to 
 // and counts the number of rotations
 type DirType struct {
-	counter int
-	dir     int
+	counter int8
+	dir     int8
 }
 
 var (
@@ -24,8 +24,8 @@ func Init() {
 }
 
 // return only dir from path
-func GetPath() []int {
-	pa := []int{}
+func GetPath() []int8 {
+	pa := []int8{}
 	for i := 0; i < len(path); i++ {
 		pa = append(pa, path[i].dir)
 	}
@@ -145,7 +145,7 @@ func sameFields(a []Point, b []Point) bool {
 	return true
 }
 
-func getLastPath() int {
+func getLastPath() int8 {
 	if len(path) > 0 {
 		return path[len(path)-1].dir
 	}
@@ -160,7 +160,7 @@ func incLastPath() {
 	path[len(path)-1].counter++
 }
 
-func getLastCounter() int {
+func getLastCounter() int8 {
 	if len(path) > 0 {
 		return path[len(path)-1].counter
 	}
@@ -176,16 +176,16 @@ func rmLastPath() {
 
 }
 
-func addToPath(dir int) {
+func addToPath(dir int8) {
 	path = append(path, DirType{-1, dir})
 }
 
-func abs(a int) int {
-	if a < 0 {
-		a = a * -1
-	}
-	return a
-}
+//func abs(a int8) int8 {
+//	if a < 0 {
+//		a = a * -1
+//	}
+//	return a
+//}
 
 // return min, sec and µsec since specified starttime
 func getTimePassed(starttime syscall.Timeval) (min, sec, µsec int) {
