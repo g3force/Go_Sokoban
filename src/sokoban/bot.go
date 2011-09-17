@@ -38,37 +38,61 @@ func Run(single bool, outputFreq int, printSurface bool) {
 	MarkDeadFields()
 	fmt.Println()
 	Print()
-	j := 0
-	steps := 0
-	solutions := 0
-	solSteps := []int{}
+	steps, solutions, solSteps := 0, 0, []int{}
+	// init time counter
 	var starttime syscall.Timeval
 	syscall.Gettimeofday(&starttime)
-
+Main:
 	for {
-		moved, finished := Step()
-		// finished indicates, that all possibilities were tried
-		if finished {
+		// ### 1. check if finished
+		if len(path) == 0 {
+			I("Empty path. Hopefully all possibilities tried ;)")
 			break
 		}
-		if moved {
-			steps++
-			j = 0
-		} else {
-			j++
-			if j > 1000 {
-				E("Bot seems not to move")
-				break
+		// ### 2. increase the last path to try the next possibility
+		incLastPath()
+		// ### 3. check if rotation is finished. Then backtrack
+		if getLastCounter() > 3 {
+			I("Rotation finished. Deadlock. Backtrack.")
+			UndoStep()
+			rmLastPath()
+			continue
+		}
+		// ### 4. Try moving
+		I("Try moving in dir=%d", getLastPath())
+		moved, boxMoved := Move(getLastPath())
+		if !moved {
+			I("Could not move.")
+			continue
+		}
+		// ### 5. If moved, first check if not in a loop
+		newHist := GetBoxesAndX()
+		for i := 0; i < len(history); i++ {
+			if sameFields(history[i], newHist) {
+				I("I'v been here already. Backtrack.")
+				UndoStep()
+				continue Main
 			}
 		}
+		// ### 6. If not in a loop, append history and go on
+		history = append(history, newHist)
+		if StraightAhead {
+			addToPath(getLastPath() - 1)
+		} else {
+			addToPath(-1)
+		}
+		I("Moved. Path added.")
+		// ### 7. Do some statistics
+		steps++
 		if printSurface {
 			Print()
 		}
-		if j == 0 && steps%outputFreq == 0 {
+		if steps%outputFreq == 0 {
 			min, sec, µsec := getTimePassed(starttime)
 			D("Steps: %6d; %4dm %2ds %6dµs", steps, min, sec, µsec)
 		}
-		if Won() {
+		// ### 8. Do we already won? :)
+		if boxMoved != EMPTY && Won() {
 			solutions++
 			min, sec, µsec := getTimePassed(starttime)
 			fmt.Printf("%d. solution found after %d steps, %4dm %2ds %6dµs.\nPath: %d\n", solutions, steps, min, sec, µsec, GetPath())
@@ -81,62 +105,16 @@ func Run(single bool, outputFreq int, printSurface bool) {
 			rmLastPath()
 		}
 	}
+
 	min, sec, µsec := getTimePassed(starttime)
 	fmt.Printf("Run finished with %d steps after %dm %ds %dµs.\n%d solutions found at following steps:\n%d\n", steps, min, sec, µsec, solutions, solSteps)
 }
 
-func Step() (hasMoved bool, finished bool) {
-	hasMoved = false
-	finished = false
-	if len(path) == 0 {
-		I("Empty path. Hopefully all possibilities tried ;)")
-		finished = true
-		return
-	} else {
-		incLastPath() // first of all: increase the last path to try the next possibility
-		if getLastCounter() > 3 {
-			I("Rotation finished. Deadlock. Backtrack.")
-			UndoStep()
-			rmLastPath()
-		} else {
-			I("Try moving in dir=%d", getLastPath())
-			moved, _ := Move(getLastPath())
-			if moved {
-				newHist := GetBoxesAndX() // TODO improve this?
-				//				D("hist: %d", newHist)
-				hit := false
-				for i := 0; i < len(history); i++ {
-					if sameFields(history[i], newHist) {
-						I("I'v been here already. Backtrack.")
-						UndoStep()
-						hit = true
-						break
-					}
-				}
-				if !hit {
-					history = append(history, newHist)
-					if StraightAhead {
-						addToPath(getLastPath() - 1)
-					} else {
-						addToPath(-1)
-					}
-					I("Moved. Path added.")
-					hasMoved = true
-				}
-			} else {
-				I("Could not move.")
-			}
-		}
-	}
-	I("End Step. Path: %d", path)
-	return
-}
-
 // check, if a and b are equal
 func sameFields(a []Point, b []Point) bool {
-	if len(a) != len(b) {
-		return false
-	}
+	//	if len(a) != len(b) {
+	//		return false
+	//	}
 	for y := 0; y < len(a); y++ {
 		if a[y].X != b[y].X || a[y].Y != b[y].Y {
 			return false
