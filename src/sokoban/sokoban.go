@@ -66,6 +66,10 @@ func (b *Box) SetOrder(order int8) {
 	b.Order = order
 }
 
+func GetPoints() []Point {
+	return points
+}
+
 func GetBoxes() map[int8]*Box {
 	return boxes
 }
