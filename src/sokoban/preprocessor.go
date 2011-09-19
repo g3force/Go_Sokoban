@@ -1,7 +1,7 @@
 package sokoban
 
 // check, if given point is a dead corner
-func DeadCorner(point Point) (found bool, x int) {
+func DeadCorner(point Point) (found bool, x int8) {
 	var p Point
 	hit := false
 	x = 0
@@ -13,7 +13,7 @@ func DeadCorner(point Point) (found bool, x int) {
 	// check clockwise, if there is a wall or not.
 	// If there is a wall two times together, corner is dead
 	for i := 0; i < 5; i++ {
-		x = i % 4
+		x = int8(i % 4)
 		p = addPoints(point, Direction(x))
 		if !IsInSurface(p) || Surface[p.Y][p.X].wall {
 			if hit {
@@ -36,7 +36,7 @@ func MarkDeadFields() {
 			if Surface[y][x].wall {
 				continue
 			}
-			thisPoint := Point{x, y}
+			thisPoint := NewPoint(x, y)
 			dead, dir1 := DeadCorner(thisPoint)
 			if dead {
 				Surface[y][x].dead = true
@@ -57,7 +57,7 @@ func MarkDeadFields() {
 //deadEdge: first dead Edge to star
 //dir: direction where the wall will go on
 //wallDir: direction of the wall, left or right of the dir???
-func checkForDeadWall(deadEdge Point, dir int, wallDir int) (bool, Point) {
+func checkForDeadWall(deadEdge Point, dir int8, wallDir int8) (bool, Point) {
 	possDead := deadEdge
 	for {
 		possDead = addPoints(possDead, Direction(dir))

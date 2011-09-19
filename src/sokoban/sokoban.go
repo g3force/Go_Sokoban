@@ -11,15 +11,20 @@ const EMPTY = 0
 
 // simple Point type
 type Point struct {
-	X int
-	Y int
+	X int8
+	Y int8
+}
+
+type Box struct {
+	Pos   Point
+	Order int8
 }
 
 // History Type for saving a change after a move
 type HistoryType struct {
 	OldPos   Point
 	NewPos   Point
-	BoxMoved int
+	BoxMoved int8
 }
 
 // single field within the surface
@@ -27,29 +32,50 @@ type Field struct {
 	wall  bool
 	point bool
 	dead  bool
-	box   int
+	box   int8
 }
 
 type MovingResult struct {
 	moved    bool
 	boxMoved bool
-	box      int
+	box      int8
 }
 
 var (
-	Surface [][]Field         // the current Surface
-	History []HistoryType     // history, indicating the past way
-	figPos  Point             // current position of figure
-	points  []Point           // Array of all points
-	boxes   = map[int]Point{} // Array of all boxes
+	Surface      [][]Field         // the current Surface
+	History      []HistoryType     // history, indicating the past way
+	figPos       Point             // current position of figure
+	points       []Point           // Array of all points
+	boxes        = map[int8]*Box{} // Array of all boxes
+	boxesOrdered = map[int8]*Box{}
 )
 
-func GetBoxes() map[int]Point {
+func NewPoint(x int, y int) Point {
+	return Point{int8(x), int8(y)}
+}
+
+func NewBox(pos Point, order int8) Box {
+	return Box{pos, order}
+}
+
+func (b *Box) SetPos(p Point) {
+	b.Pos = p
+}
+
+func (b *Box) SetOrder(order int8) {
+	b.Order = order
+}
+
+func GetPoints() []Point {
+	return points
+}
+
+func GetBoxes() map[int8]*Box {
 	return boxes
 }
 
 // convert direction from int to Point
-func Direction(dir int) Point {
+func Direction(dir int8) Point {
 	dir = dir % 4
 	var p Point
 	switch dir {
@@ -72,7 +98,7 @@ func Direction(dir int) Point {
 /* try moving figure in specified direction.
  * Returns, if figure was moved and if figure moved a box.
  */
-func Move(dir int) (success bool, boxMoved int) {
+func Move(dir int8) (success bool, boxMoved int8) {
 	success = false
 	boxMoved = EMPTY
 	cf := GetFigPos()                   // current figureposition
@@ -102,7 +128,8 @@ func Move(dir int) (success bool, boxMoved int) {
 		}
 		I("Move box")
 		boxMoved = f.box
-		boxes[f.box] = nnf // nnf is position that box should move to, f.box is current box
+		boxes[f.box].SetPos(nnf) // nnf is position that box should move to, f.box is current box
+		reOrderBoxes(f.box, dir)
 		Surface[nnf.Y][nnf.X].box = Surface[nf.Y][nf.X].box
 		fallthrough // go to next case statment to also move the figure
 	case f.box >= EMPTY: // actually always...
@@ -121,6 +148,49 @@ func Move(dir int) (success bool, boxMoved int) {
 	return
 }
 
+func reOrderBoxes(curBoxId int8, dir int8) {
+	switch dir {
+	case 1: // down
+	case -1: // up
+	case 3: // up
+		dir = -1 // convert
+	default:
+		// nothing todo, as there is no up/down movement
+		return
+	}
+	curBox := boxes[curBoxId]
+	curOrder := curBox.Order
+	if curOrder+dir <= 0 || curOrder+dir > int8(len(boxes)) {
+		return
+	}
+	nextBox := boxesOrdered[curOrder+dir]
+
+	//	D("1. curBox:%d nextBox:%d dir=%d", *curBox, *nextBox, dir)
+
+	if dir == -1 {
+		if nextBox.Pos.Y == curBox.Pos.Y {
+			if nextBox.Pos.X <= curBox.Pos.X {
+				return
+			}
+		} else if nextBox.Pos.Y <= curBox.Pos.Y {
+			return
+		}
+	} else {
+		if nextBox.Pos.Y == curBox.Pos.Y {
+			if nextBox.Pos.X >= curBox.Pos.X {
+				return
+			}
+		} else if nextBox.Pos.Y >= curBox.Pos.Y {
+			return
+		}
+	}
+	nextBox.SetOrder(curOrder)
+	curBox.SetOrder(curOrder + dir)
+	boxesOrdered[curOrder+dir] = curBox
+	boxesOrdered[curOrder] = nextBox
+	reOrderBoxes(curBoxId, dir)
+}
+
 // undo the last step (move figure and box to their old positions)
 func UndoStep() {
 	if len(History) > 0 {
@@ -135,7 +205,11 @@ func UndoStep() {
 			boxPoint.Y = history.NewPos.Y + (history.NewPos.Y - history.OldPos.Y)
 			Surface[history.NewPos.Y][history.NewPos.X].box = Surface[boxPoint.Y][boxPoint.X].box
 			Surface[boxPoint.Y][boxPoint.X].box = EMPTY
-			boxes[Surface[history.NewPos.Y][history.NewPos.X].box] = history.NewPos
+			boxes[Surface[history.NewPos.Y][history.NewPos.X].box].SetPos(history.NewPos)
+			// if movement was up or down
+			if history.NewPos.X-history.OldPos.X == 0 {
+				reOrderBoxes(history.BoxMoved, history.OldPos.Y-history.NewPos.Y)
+			}
 		}
 		History = History[:len(History)-1] // remove from history
 	}
@@ -156,7 +230,7 @@ func LoadLevel(filename string) {
 	Surface = [][]Field{{}}
 	var field Field
 	y := 0
-	boxId := 0
+	var boxId = int8(0)
 	for _, line := range lines {
 		// filter empty lines and lines that do not start with '#'
 		if len(line) == 0 || line[0] != '#' {
@@ -173,7 +247,7 @@ func LoadLevel(filename string) {
 				field = Field{false, false, false, boxId}
 			case '@':
 				field = Field{false, false, false, EMPTY}
-				figPos = Point{x, y}
+				figPos = NewPoint(x, y)
 			case '.':
 				field = Field{false, true, false, EMPTY}
 			case '*':
@@ -181,16 +255,18 @@ func LoadLevel(filename string) {
 				field = Field{false, true, false, boxId}
 			case '+':
 				field = Field{false, true, false, EMPTY}
-				figPos = Point{x, y}
+				figPos = NewPoint(x, y)
 			default:
 				E("Unknown character in level file: '%c'", char)
 			}
 			Surface[y] = append(Surface[y], field)
 			if field.point {
-				points = append(points, Point{x, y})
+				points = append(points, NewPoint(x, y))
 			}
 			if field.box != EMPTY {
-				boxes[boxId] = Point{x, y}
+				box := NewBox(NewPoint(x, y), boxId)
+				boxes[boxId] = &box
+				boxesOrdered[boxId] = &box
 			}
 		}
 		y++
@@ -215,8 +291,9 @@ func Won() bool {
 
 // print the current Surface
 func Print() {
-	for y := 0; y < len(Surface); y++ {
-		for x := 0; x < len(Surface[y]); x++ {
+	var x, y int8
+	for y = 0; y < int8(len(Surface)); y++ {
+		for x = 0; x < int8(len(Surface[y])); x++ {
 			switch field := Surface[y][x]; {
 			case field.wall:
 				fmt.Print("#")
@@ -249,35 +326,15 @@ func Print() {
 
 // return Point array of all boxes and the figure
 func GetBoxesAndX() (field []Point) {
-	//	field = boxes
-	//	field[0] = figPos
 	field = append(field, figPos)
 
-	var sort = map[int]map[int]int{}
-
-	for _, box := range boxes {
-		if sort[box.Y] == nil {
-			sort[box.Y] = map[int]int{}
-		}
-		sort[box.Y][box.X] = 0
+	for i := int8(1); i <= int8(len(boxesOrdered)); i++ {
+		field = append(field, boxesOrdered[i].Pos)
 	}
-
-	for y, _ := range sort {
-		for x, _ := range sort[y] {
-			field = append(field, Point{x, y})
-		}
-	}
-	//	D("field: %d", field)
-
-	//	for i := 1; i < len(boxes)+1; i++ {
-	//		field = append(field, boxes[i])
-	//	}
-	//	temp := 0
 	//	for y := 0; y < len(Surface); y++ {
 	//		for x := 0; x < len(Surface[y]); x++ {
 	//			if Surface[y][x].box != EMPTY {
-	//				field = append(field, Point{x, y})
-	//				//				temp++
+	//				field = append(field, NewPoint(x, y))
 	//			}
 	//		}
 	//	}
@@ -298,8 +355,8 @@ func PrintInfo() {
 }
 
 // return number of boxes on the surface
-func CountBoxes() int {
-	count := 0
+func CountBoxes() int8 {
+	count := int8(0)
 	for y := 0; y < len(Surface); y++ {
 		for x := 0; x < len(Surface[y]); x++ {
 			if Surface[y][x].box != EMPTY {
@@ -312,7 +369,7 @@ func CountBoxes() int {
 
 // check if the surface border was reached
 func IsInSurface(p Point) bool {
-	if p.Y < 0 || p.X < 0 || p.Y >= len(Surface) || p.X >= len(Surface[0]) {
+	if p.Y < 0 || p.X < 0 || p.Y >= int8(len(Surface)) || p.X >= int8(len(Surface[0])) {
 		D("not in surface: %d", p)
 		return false
 	}
