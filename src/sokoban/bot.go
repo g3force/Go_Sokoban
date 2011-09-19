@@ -114,7 +114,7 @@ func Run(single bool, outputFreq int, printSurface bool) {
 			UndoStep()
 			rmLastPath()
 		}
-		printTree()
+		//printTree()
 		
 	}
 
@@ -158,13 +158,15 @@ func insertNewHist(h *HistoryTree, boxList []Point, counter int8) (newHis Histor
 	if int8(len(boxList))==counter {
 		return
 	}
-	newHis = newHistoryTree(boxList[counter].X, boxList[counter].Y, []HistoryTree{insertNewHist(&newHis, boxList, counter)})
+	newHis = newHistoryTree(boxList[counter].X, boxList[counter].Y, nil)// []HistoryTree{insertNewHist(&newHis, boxList, counter)})
 	h.sons = append(h.sons, newHis)
+	insertNewHist(&(h.sons[len(h.sons)-1]), boxList, counter)
+	//E("%d",h.sons)
 	return
 }
 
 func newHistoryTree(x int8, y int8, sons []HistoryTree) HistoryTree {
-	return HistoryTree{x, y, nil}
+	return HistoryTree{x, y, sons}
 }
 
 func searchSons(h *HistoryTree, box Point) int {
