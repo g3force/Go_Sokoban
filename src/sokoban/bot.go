@@ -13,8 +13,8 @@ type DirType struct {
 }
 
 type HistoryTree struct {
-	x int
-	y int
+	x int8
+	y int8
 	sons []HistoryTree
 }
 
@@ -48,7 +48,6 @@ func Run(single bool, outputFreq int, printSurface bool) {
 	// init time counter
 	var starttime syscall.Timeval
 	syscall.Gettimeofday(&starttime)
-Main:
 	for {
 		// ### 1. check if finished
 		if len(path) == 0 {
@@ -87,7 +86,6 @@ Main:
 		}
 		// ### 6. If not in a loop, append history and go on
 		addHistory(newHist)
-		printTree()
 		if StraightAhead {
 			addToPath(getLastPath() - 1)
 		} else {
@@ -123,12 +121,14 @@ Main:
 }
 
 func everBeenHere(boxes []Point) bool {
-	h := history
+	h := &history
 	for i := 0; i <  len(boxes); i++ {
 		box := boxes[i]
 		son := searchSons(h, box)
-		if son != -1 {
+		if son == -1 {
 			return false
+		} else {
+			h=&(h.sons[son])
 		}
 	}
 	if len(history.sons)==0 {
@@ -138,7 +138,7 @@ func everBeenHere(boxes []Point) bool {
 }
 
 func addHistory(boxes []Point) {
-	h := history
+	h := &history
 	for i := 0; i <  len(boxes); i++ {
 		box := boxes[i]
 		son := searchSons(h, box)
@@ -146,25 +146,24 @@ func addHistory(boxes []Point) {
 			insertNewHist(h, boxes[i:])
 			break
 		} else {
-			h=h.sons[son]
+			h=&(h.sons[son])
 		}
 	}
 }
 
-func insertNewHist(h HistoryTree, boxList []Point) {
-	E("historytree: %d, boxes: %d", h, boxList)	
+func insertNewHist(h *HistoryTree, boxList []Point) {
 	for _, box := range boxList {
 		newHis := newHistoryTree(box.X, box.Y, nil)
 		h.sons = append(h.sons, newHis)
-		h = newHis
+		h = &newHis
 	}
 }
 
-func newHistoryTree(x int, y int, sons []HistoryTree) HistoryTree {
+func newHistoryTree(x int8, y int8, sons []HistoryTree) HistoryTree {
 	return HistoryTree{x, y, nil}
 }
 
-func searchSons(h HistoryTree, box Point) int {
+func searchSons(h *HistoryTree, box Point) int {
 	for key, value:=range h.sons {
 		if value.x == box.X && value.y == box.Y {
 			return key 	
@@ -177,8 +176,7 @@ func printTree() {
 	fmt.Print(history)
 }
 
-=======
->>>>>>> a2e3c0d17e12441f7fd48d6380389985f0031895
+
 // check, if a and b are equal
 func sameFields(a []Point, b []Point) bool {
 	//	if len(a) != len(b) {
@@ -192,12 +190,7 @@ func sameFields(a []Point, b []Point) bool {
 	return true
 }
 
-<<<<<<< HEAD
-
-func getLastPath() int {
-=======
 func getLastPath() int8 {
->>>>>>> a2e3c0d17e12441f7fd48d6380389985f0031895
 	if len(path) > 0 {
 		return path[len(path)-1].dir
 	}
