@@ -12,15 +12,21 @@ type DirType struct {
 	dir     int
 }
 
+type HistoryTree struct {
+	x int
+	y int
+	sons []HistoryTree
+}
+
 var (
 	path          = []DirType{} // direction path (which directions the figure has taken yet)
-	history       = [][]Point{} // history with collection of all points and figure
+	history       = HistoryTree{} // history with collection of all points and figure
 	StraightAhead bool          // true: new direction are initialized with current dir, false: init with 0
 )
 
 func Init() {
 	path = []DirType{{-1, -1}}
-	history = [][]Point{GetBoxesAndX()}
+	history = HistoryTree{-1,-1, nil}
 }
 
 // return only dir from path
@@ -105,16 +111,14 @@ func Step() (hasMoved bool, finished bool) {
 				newHist := GetBoxesAndX() // TODO improve this?
 				//				D("hist: %d", newHist)
 				hit := false
-				for i := 0; i < len(history); i++ {
-					if sameFields(history[i], newHist) {
-						I("I'v been here already. Backtrack.")
-						UndoStep()
-						hit = true
-						break
-					}
+				if everBeenHere(newHist) {
+					I("I'v been here already. Backtrack.")
+					UndoStep()
+					hit = true
 				}
 				if !hit {
-					history = append(history, newHist)
+					addHistory(newHist)
+					printTree()
 					if StraightAhead {
 						addToPath(getLastPath() - 1)
 					} else {
@@ -132,6 +136,61 @@ func Step() (hasMoved bool, finished bool) {
 	return
 }
 
+func everBeenHere(boxes []Point) bool {
+	h := history
+	for i := 0; i <  len(boxes); i++ {
+		box := boxes[i]
+		son := searchSons(h, box)
+		if son != -1 {
+			return false
+		}
+	}
+	if len(history.sons)==0 {
+		return false
+	}
+	return true
+}
+
+func addHistory(boxes []Point) {
+	h := history
+	for i := 0; i <  len(boxes); i++ {
+		box := boxes[i]
+		son := searchSons(h, box)
+		if son == -1 {
+			insertNewHist(h, boxes[i:])
+			break
+		} else {
+			h=h.sons[son]
+		}
+	}
+}
+
+func insertNewHist(h HistoryTree, boxList []Point) {
+	E("historytree: %d, boxes: %d", h, boxList)	
+	for _, box := range boxList {
+		newHis := newHistoryTree(box.X, box.Y, nil)
+		h.sons = append(h.sons, newHis)
+		h = newHis
+	}
+}
+
+func newHistoryTree(x int, y int, sons []HistoryTree) HistoryTree {
+	return HistoryTree{x, y, nil}
+}
+
+func searchSons(h HistoryTree, box Point) int {
+	for key, value:=range h.sons {
+		if value.x == box.X && value.y == box.Y {
+			return key 	
+		}
+	}
+	return -1
+}
+
+func printTree() {
+	fmt.Print(history)
+}
+
 // check, if a and b are equal
 func sameFields(a []Point, b []Point) bool {
 	if len(a) != len(b) {
@@ -144,6 +203,7 @@ func sameFields(a []Point, b []Point) bool {
 	}
 	return true
 }
+
 
 func getLastPath() int {
 	if len(path) > 0 {
