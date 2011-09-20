@@ -54,6 +54,10 @@ func NewPoint(x int, y int) Point {
 	return Point{int8(x), int8(y)}
 }
 
+func NewPoint8(x int8, y int8) Point {
+	return Point{x, y}
+}
+
 func NewBox(pos Point, order int8) Box {
 	return Box{pos, order}
 }

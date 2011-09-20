@@ -13,8 +13,8 @@ type DirType struct {
 }
 
 type HistoryTree struct {
-	p uint16
-	//	x, y int8
+	//	p    uint16
+	p    Point
 	sons []*HistoryTree
 }
 
@@ -22,24 +22,25 @@ var (
 	path          = []DirType{}   // direction path (which directions the figure has taken yet)
 	history       = HistoryTree{} // history with collection of all points and figure
 	StraightAhead bool            // true: new direction are initialized with current dir, false: init with 0
-	pointmap      = map[uint16]Point{}
-	surWidth      int8
+	//	pointmap      = map[uint16]Point{}
+	//	surWidth      int8
 )
 
 func Init() {
 	path = []DirType{{-1, -1}}
-	history = HistoryTree{0, nil}
-	surWidth = int8(len(Surface[0]))
-	for y, _ := range Surface {
-		for x, _ := range Surface[y] {
-			pointmap[uint16(y*int(surWidth)+x)] = NewPoint(x, y)
-		}
-	}
+	history = HistoryTree{NewPoint(-1, -1), nil}
+	//	history = HistoryTree{0, nil}
+	//	surWidth = int8(len(Surface[0]))
+	//	for y, _ := range Surface {
+	//		for x, _ := range Surface[y] {
+	//			pointmap[uint16(y*int(surWidth)+x)] = NewPoint(x, y)
+	//		}
+	//	}
 }
 
-func getPointMapId(x, y int8) uint16 {
-	return uint16(y*surWidth + x)
-}
+//func getPointMapId(x, y int8) uint16 {
+//	return uint16(y*surWidth + x)
+//}
 
 // return only dir from path
 func GetPath() []int8 {
@@ -84,13 +85,6 @@ func Run(single bool, outputFreq int, printSurface bool) {
 		}
 		// ### 5. If moved, first check if not in a loop
 		newHist := GetBoxesAndX()
-		//		for i := 0; i < len(history); i++ {
-		//			if sameFields(history[i], newHist) {
-		//				I("I'v been here already. Backtrack.")
-		//				UndoStep()
-		//				continue Main
-		//			}
-		//		}
 		if everBeenHere(newHist) {
 			I("I'v been here already. Backtrack.")
 			UndoStep()
@@ -111,7 +105,7 @@ func Run(single bool, outputFreq int, printSurface bool) {
 		}
 		if steps%outputFreq == 0 {
 			min, sec, µsec := getTimePassed(starttime)
-			D("Steps: %6d; %4dm %2ds %6dµs", steps, min, sec, µsec)
+			D("Steps: %9d; %4dm %2ds %6dµs", steps, min, sec, µsec)
 		}
 		// ### 8. Do we already won? :)
 		if boxMoved != EMPTY && Won() {
@@ -155,7 +149,7 @@ func addHistory(boxes []Point) {
 		box := boxes[i]
 		son := searchSons(h, box)
 		if son == -1 {
-			insertNewHist(h, boxes[i:])
+			insertNewHist(h, boxes[i:], -1)
 			break
 		} else {
 			h = h.sons[son]
@@ -163,21 +157,26 @@ func addHistory(boxes []Point) {
 	}
 }
 
-func insertNewHist(h *HistoryTree, boxList []Point) {
-	for _, box := range boxList {
-		newHis := newHistoryTree(box.X, box.Y, nil)
-		h.sons = append(h.sons, &newHis)
-		h = &newHis
+func insertNewHist(h *HistoryTree, boxList []Point, counter int8) (newHis HistoryTree) {
+	counter++
+	if int8(len(boxList)) == counter {
+		return
 	}
+	newHis = newHistoryTree(boxList[counter].X, boxList[counter].Y, nil)
+	h.sons = append(h.sons, &newHis)
+	insertNewHist(h.sons[len(h.sons)-1], boxList, counter)
+	return
 }
 
 func newHistoryTree(x int8, y int8, sons []HistoryTree) HistoryTree {
-	return HistoryTree{getPointMapId(x, y), nil}
+	//	return HistoryTree{getPointMapId(x, y), nil}
+	return HistoryTree{NewPoint8(x, y), nil}
 }
 
 func searchSons(h *HistoryTree, box Point) int {
 	for key, value := range h.sons {
-		if pointmap[value.p].X == box.X && pointmap[value.p].Y == box.Y {
+		//		if pointmap[value.p].X == box.X && pointmap[value.p].Y == box.Y {
+		if value.p.X == box.X && value.p.Y == box.Y {
 			return key
 		}
 	}
@@ -185,7 +184,7 @@ func searchSons(h *HistoryTree, box Point) int {
 }
 
 func printTree() {
-	fmt.Print(history)
+	fmt.Println(history)
 }
 
 // check, if a and b are equal
@@ -235,13 +234,6 @@ func rmLastPath() {
 func addToPath(dir int8) {
 	path = append(path, DirType{-1, dir})
 }
-
-//func abs(a int8) int8 {
-//	if a < 0 {
-//		a = a * -1
-//	}
-//	return a
-//}
 
 // return min, sec and µsec since specified starttime
 func getTimePassed(starttime syscall.Timeval) (min, sec, µsec int) {
