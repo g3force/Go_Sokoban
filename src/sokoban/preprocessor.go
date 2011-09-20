@@ -32,11 +32,11 @@ func DeadCorner(point Point) (found bool, x int8) {
 func MarkDeadFields() {
 	for y := 0; y < len(Surface); y++ {
 		for x := 0; x < len(Surface[y]); x++ {
+			thisPoint := NewPoint(x, y)
 			// walls can't be dead fields
-			if Surface[y][x].wall {
+			if !IsInSurface(thisPoint) || Surface[y][x].wall {
 				continue
 			}
-			thisPoint := NewPoint(x, y)
 			dead, dir1 := DeadCorner(thisPoint)
 			if dead {
 				Surface[y][x].dead = true
@@ -61,8 +61,15 @@ func checkForDeadWall(deadEdge Point, dir int8, wallDir int8) (bool, Point) {
 	possDead := deadEdge
 	for {
 		possDead = addPoints(possDead, Direction(dir))
+		if !IsInSurface(possDead) {
+			return false, possDead
+		}
 		possField := Surface[possDead.Y][possDead.X]
-		possWall := Surface[addPoints(possDead, Direction(wallDir)).Y][addPoints(possDead, Direction(wallDir)).X]
+		possWallPos := addPoints(possDead, Direction(wallDir))
+		if !IsInSurface(possWallPos) {
+			return false, possDead
+		}
+		possWall := Surface[possWallPos.Y][possWallPos.X]
 		if possField.wall || possField.point || !possWall.wall {
 			return false, possDead
 		} else {

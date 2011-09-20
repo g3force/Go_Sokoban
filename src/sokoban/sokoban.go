@@ -386,8 +386,7 @@ func CountBoxes() int8 {
 
 // check if the surface border was reached
 func IsInSurface(p Point) bool {
-	if p.Y < 0 || p.X < 0 || p.Y >= int8(len(Surface)) || p.X >= int8(len(Surface[0])) {
-		D("not in surface: %d", p)
+	if p.Y < 0 || p.X < 0 || p.Y >= int8(len(Surface)) || p.X >= int8(len(Surface[p.Y])) {
 		return false
 	}
 	return true
