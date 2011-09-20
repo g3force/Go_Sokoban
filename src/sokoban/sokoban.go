@@ -230,13 +230,26 @@ func LoadLevel(filename string) {
 	Surface = [][]Field{{}}
 	var field Field
 	y := 0
-	var boxId = int8(0)
+	boxId := int8(0)
+	maxlen := 0
+	var char uint8
+
+	for _, line := range lines {
+		if len(line) > 0 && line[0] == '#' && len(line) > maxlen {
+			maxlen = len(line)
+		}
+	}
+
 	for _, line := range lines {
 		// filter empty lines and lines that do not start with '#'
 		if len(line) == 0 || line[0] != '#' {
 			continue
 		}
-		for x, char := range line {
+		for x := 0; x < maxlen; x++ {
+			char = '#'
+			if x < len(line) {
+				char = line[x]
+			}
 			switch char {
 			case '#':
 				field = Field{true, false, false, EMPTY}
