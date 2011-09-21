@@ -3,6 +3,7 @@ package sokoban
 import (
 	"fmt"
 	"syscall"
+	"unsafe"
 )
 
 // indicates the direction, that the figure moves to 
@@ -45,6 +46,7 @@ func Run(single bool, outputFreq int, printSurface bool) {
 	fmt.Println()
 	Print()
 	steps, solutions, solSteps := 0, 0, []int{}
+	println(unsafe.Sizeof(HistoryTree{}))
 	// init time counter
 	var starttime syscall.Timeval
 	syscall.Gettimeofday(&starttime)

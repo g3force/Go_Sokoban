@@ -74,6 +74,22 @@ func GetBoxes() map[int8]*Box {
 	return boxes
 }
 
+func GetAmountOfFields() (fields int, dead int8) {
+	for y := 0; y < len(Surface); y++ {
+		for x := 0; x < len(Surface[y]); x++ {
+			if(!Surface[y][x].wall) {
+				fields++
+			}
+			if(Surface[y][x].dead) {
+				dead++
+			}
+		}
+	}
+	return
+}
+
+
+
 // convert direction from int to Point
 func Direction(dir int8) Point {
 	dir = dir % 4
@@ -322,6 +338,11 @@ func Print() {
 		}
 		fmt.Println()
 	}
+	fieldnr, deadnr := GetAmountOfFields()
+	fmt.Printf("Boxes: %d\n", len(GetBoxes()))
+	fmt.Printf("Points: %d\n", len(GetPoints()))
+	fmt.Printf("Fields: %d\n", fieldnr)
+	fmt.Printf("DeadFields: %d\n", deadnr)	
 }
 
 // return Point array of all boxes and the figure

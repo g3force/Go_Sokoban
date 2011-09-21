@@ -54,7 +54,7 @@ func main() {
 	sokoban.LoadLevel(level)
 	sokoban.Init()
 	sokoban.Print()
-	fmt.Printf("boxes: %d, points: %d\n", len(sokoban.GetBoxes()), len(sokoban.GetPoints()))
+	//fmt.Printf("boxes: %d, points: %d\n", len(sokoban.GetBoxes()), len(sokoban.GetPoints()))
 
 	if runmode {
 		sokoban.Run(single, outputFreq, printSurface)
