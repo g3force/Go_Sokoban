@@ -54,6 +54,10 @@ func NewPoint(x int, y int) Point {
 	return Point{int8(x), int8(y)}
 }
 
+func NewPoint8(x int8, y int8) Point {
+	return Point{x, y}
+}
+
 func NewBox(pos Point, order int8) Box {
 	return Box{pos, order}
 }
@@ -246,13 +250,26 @@ func LoadLevel(filename string) {
 	Surface = [][]Field{{}}
 	var field Field
 	y := 0
-	var boxId = int8(0)
+	boxId := int8(0)
+	maxlen := 0
+	var char uint8
+
+	for _, line := range lines {
+		if len(line) > 0 && line[0] == '#' && len(line) > maxlen {
+			maxlen = len(line)
+		}
+	}
+
 	for _, line := range lines {
 		// filter empty lines and lines that do not start with '#'
 		if len(line) == 0 || line[0] != '#' {
 			continue
 		}
-		for x, char := range line {
+		for x := 0; x < maxlen; x++ {
+			char = '#'
+			if x < len(line) {
+				char = line[x]
+			}
 			switch char {
 			case '#':
 				field = Field{true, false, false, EMPTY}
@@ -390,8 +407,7 @@ func CountBoxes() int8 {
 
 // check if the surface border was reached
 func IsInSurface(p Point) bool {
-	if p.Y < 0 || p.X < 0 || p.Y >= int8(len(Surface)) || p.X >= int8(len(Surface[0])) {
-		D("not in surface: %d", p)
+	if p.Y < 0 || p.X < 0 || p.Y >= int8(len(Surface)) || p.X >= int8(len(Surface[p.Y])) {
 		return false
 	}
 	return true

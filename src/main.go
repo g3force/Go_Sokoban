@@ -13,7 +13,7 @@ func main() {
 	single := true
 	level := "level1"
 	sokoban.StraightAhead = false
-	outputFreq := 5000
+	outputFreq := 50000
 	printSurface := false
 
 	if len(os.Args) > 1 {
