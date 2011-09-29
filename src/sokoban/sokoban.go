@@ -122,7 +122,7 @@ func Move(dir int8) (success bool, boxMoved int8) {
 	success = false
 	boxMoved = EMPTY
 	cf := GetFigPos()                   // current figureposition
-	nf := addPoints(cf, Direction(dir)) // potential new figureposition
+	nf := AddPoints(cf, Direction(dir)) // potential new figureposition
 	if !IsInSurface(nf) {
 		I("Can not move: surface border")
 		return
@@ -133,7 +133,7 @@ func Move(dir int8) (success bool, boxMoved int8) {
 		I("Can not move: wall")
 		return
 	case f.box != EMPTY: // if box
-		nnf := addPoints(nf, Direction(dir)) // potential new boxposition
+		nnf := AddPoints(nf, Direction(dir)) // potential new boxposition
 		if !IsInSurface(nnf) {
 			I("Can not move: blocked box (surface border)")
 			return
@@ -414,7 +414,7 @@ func IsInSurface(p Point) bool {
 }
 
 // add to points (their x and y)
-func addPoints(p1 Point, p2 Point) Point {
+func AddPoints(p1 Point, p2 Point) Point {
 	var np Point
 	np.X = p1.X + p2.X
 	np.Y = p1.Y + p2.Y

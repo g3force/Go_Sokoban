@@ -14,7 +14,7 @@ func DeadCorner(point Point) (found bool, x int8) {
 	// If there is a wall two times together, corner is dead
 	for i := 0; i < 5; i++ {
 		x = int8(i % 4)
-		p = addPoints(point, Direction(x))
+		p = AddPoints(point, Direction(x))
 		if !IsInSurface(p) || Surface[p.Y][p.X].wall {
 			if hit {
 				found = true
@@ -60,12 +60,12 @@ func MarkDeadFields() {
 func checkForDeadWall(deadEdge Point, dir int8, wallDir int8) (bool, Point) {
 	possDead := deadEdge
 	for {
-		possDead = addPoints(possDead, Direction(dir))
+		possDead = AddPoints(possDead, Direction(dir))
 		if !IsInSurface(possDead) {
 			return false, possDead
 		}
 		possField := Surface[possDead.Y][possDead.X]
-		possWallPos := addPoints(possDead, Direction(wallDir))
+		possWallPos := AddPoints(possDead, Direction(wallDir))
 		if !IsInSurface(possWallPos) {
 			return false, possDead
 		}
