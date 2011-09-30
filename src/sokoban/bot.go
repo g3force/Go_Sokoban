@@ -11,6 +11,7 @@ import (
 type DirType struct {
 	counter int8
 	dir     int8
+	ignored []int8
 }
 
 type HistoryTree struct {
@@ -28,7 +29,7 @@ var (
 )
 
 func Init() {
-	path = []DirType{{-1, -1}}
+	path = []DirType{{-1, -1, nil}}
 	history = HistoryTree{NewPoint(-1, -1), nil}
 	//	history = HistoryTree{0, nil}
 	//	surWidth = int8(len(Surface[0]))
@@ -60,10 +61,12 @@ func Run(single bool, outputFreq int, printSurface bool) {
 	Print()
 	steps, solutions, solSteps := 0, 0, []int{}
 	println(unsafe.Sizeof(HistoryTree{}))
+	var ignoredDir = false
 	// init time counter
 	var starttime syscall.Timeval
 	syscall.Gettimeofday(&starttime)
 	for {
+		ignoredDir = false
 		// ### 1. check if finished
 		if len(path) == 0 {
 			I("Empty path. Hopefully all possibilities tried ;)")
@@ -73,12 +76,26 @@ func Run(single bool, outputFreq int, printSurface bool) {
 		incLastPath()
 		// ### 3. check if rotation is finished. Then backtrack
 		if getLastCounter() > 3 {
-			I("Rotation finished. Deadlock. Backtrack.")
-			UndoStep()
-			rmLastPath()
+			var dir = getIgnoreOfPath()
+			if dir == -1 {
+				I("Rotation finished. Deadlock. Backtrack.")
+				UndoStep()
+				rmLastPath()
+				continue
+			} else {
+				setLastPath(dir)
+				ignoredDir = true
+			}
+		}
+		// ### 4a. check if there is a box in direction dir and if this box is on a point
+		cf := GetFigPos()                   // current figureposition
+		nf := AddPoints(cf, Direction(getLastPath())) // potential new figureposition
+		if Surface[nf.Y][nf.X].point && Surface[nf.Y][nf.X].box != EMPTY && !ignoredDir {
+			I("Do not moving a box from a point")
+			addIgnoreOfPath(getLastPath())
 			continue
 		}
-		// ### 4. Try moving
+		// ### 4b. Try moving
 		I("Try moving in dir=%d", getLastPath())
 		moved, boxMoved := Move(getLastPath())
 		if !moved {
@@ -209,6 +226,10 @@ func getLastPath() int8 {
 	return -1
 }
 
+func setLastPath(dir int8) {
+	path[len(path)-1].dir = dir
+}
+
 func incLastPath() {
 	path[len(path)-1].dir++
 	if path[len(path)-1].dir == 4 {
@@ -234,7 +255,21 @@ func rmLastPath() {
 }
 
 func addToPath(dir int8) {
-	path = append(path, DirType{-1, dir})
+	path = append(path, DirType{-1, dir, nil})
+}
+
+//returns and deletes the ignored direction if there was a direction ignored in this DirType, -1 if not
+func getIgnoreOfPath() int8 {
+	if len(path[len(path)-1].ignored)==0 {
+		return -1
+	}
+	var dir = path[len(path)-1].ignored[len(path[len(path)-1].ignored)-1]
+	path[len(path)-1].ignored = path[len(path)-1].ignored[:len(path[len(path)-1].ignored)-1]
+	return dir
+}
+
+func addIgnoreOfPath(dir int8) {
+	path[len(path)-1].ignored = append(path[len(path)-1].ignored, dir)
 }
 
 // return min, sec and µsec since specified starttime
