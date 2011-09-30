@@ -78,21 +78,23 @@ func GetBoxes() map[int8]*Box {
 	return boxes
 }
 
+func GetFigPos() Point {
+	return figPos
+}
+
 func GetAmountOfFields() (fields int, dead int8) {
 	for y := 0; y < len(Surface); y++ {
 		for x := 0; x < len(Surface[y]); x++ {
-			if(!Surface[y][x].wall) {
+			if !Surface[y][x].wall {
 				fields++
 			}
-			if(Surface[y][x].dead) {
+			if Surface[y][x].dead {
 				dead++
 			}
 		}
 	}
 	return
 }
-
-
 
 // convert direction from int to Point
 func Direction(dir int8) Point {
@@ -235,10 +237,6 @@ func UndoStep() {
 	}
 }
 
-func GetFigPos() Point {
-	return figPos
-}
-
 // load level from specified file (relative to binary file)
 func LoadLevel(filename string) {
 	raw, _ := contents(filename)
@@ -359,7 +357,7 @@ func Print() {
 	fmt.Printf("Boxes: %d\n", len(GetBoxes()))
 	fmt.Printf("Points: %d\n", len(GetPoints()))
 	fmt.Printf("Fields: %d\n", fieldnr)
-	fmt.Printf("DeadFields: %d\n", deadnr)	
+	fmt.Printf("DeadFields: %d\n", deadnr)
 }
 
 // return Point array of all boxes and the figure
