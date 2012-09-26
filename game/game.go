@@ -1,18 +1,19 @@
 package main
 
 import (
-	"sokoban"
+	"sokoban/ai"
 	"fmt"
 	"os"
 	"strconv"
+	"log"
 )
 
 func main() {
-	sokoban.DebugLevel = 3
+	ai.DebugLevel = 3
 	runmode := false
 	single := true
-	level := "level1"
-	sokoban.StraightAhead = false
+	level := "alevel"
+	ai.StraightAhead = false
 	outputFreq := 50000
 	printSurface := false
 
@@ -26,18 +27,18 @@ func main() {
 					level = os.Args[i+1]
 				}
 			case "-i":
-				sokoban.PrintInfo()
+				ai.PrintInfo()
 			case "-m":
 				single = false
 			case "-d":
 				if len(os.Args) > i+1 {
 					debuglevel, err := strconv.Atoi(os.Args[i+1])
 					if err == nil {
-						sokoban.DebugLevel = debuglevel
+						ai.DebugLevel = debuglevel
 					}
 				}
 			case "-s":
-				sokoban.StraightAhead = true
+				ai.StraightAhead = true
 			case "-f":
 				if len(os.Args) > i+1 {
 					of, err := strconv.Atoi(os.Args[i+1])
@@ -51,13 +52,14 @@ func main() {
 		}
 	}
 
-	sokoban.LoadLevel(level)
-	sokoban.Init()
-	sokoban.Print()
-	//fmt.Printf("boxes: %d, points: %d\n", len(sokoban.GetBoxes()), len(sokoban.GetPoints()))
+	ai.LoadLevel(level)
+	ai.Init()
+	log.Print("Level: " + level)
+	ai.Print()
+	//fmt.Printf("boxes: %d, points: %d\n", len(ai.GetBoxes()), len(ai.GetPoints()))
 
 	if runmode {
-		sokoban.Run(single, outputFreq, printSurface)
+		ai.Run(single, outputFreq, printSurface)
 		return
 	}
 
@@ -67,7 +69,7 @@ func main() {
 		fmt.Print("Press m for manual or r for run: ")
 		fmt.Scanf("%s", &choice)
 		if choice == "r" {
-			sokoban.Run(single, outputFreq, printSurface)
+			ai.Run(single, outputFreq, printSurface)
 			break
 		} else if choice == "m" {
 			fmt.Println("Manual mode")
@@ -75,11 +77,11 @@ func main() {
 			for {
 				fmt.Scanf("%d", &input)
 				if input >= 0 && input <= 3 {
-					sokoban.Move(int8(input))
-					sokoban.Print()
+					ai.Move(int8(input))
+					ai.Print()
 				} else {
-					sokoban.UndoStep()
-					sokoban.Print()
+					ai.UndoStep()
+					ai.Print()
 				}
 			}
 			break

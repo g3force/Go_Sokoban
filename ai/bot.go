@@ -1,4 +1,4 @@
-package sokoban
+package ai
 
 import (
 	"fmt"
@@ -53,7 +53,7 @@ func GetPath() []int8 {
 	return pa
 }
 
-// run the algo by calling Step(), print some output and catch if won.
+// run the algo, print some output and catch if won.
 func Run(single bool, outputFreq int, printSurface bool) {
 	Init()
 	MarkDeadFields()
@@ -88,7 +88,7 @@ func Run(single bool, outputFreq int, printSurface bool) {
 			}
 		}
 		// ### 4a. check if there is a box in direction dir and if this box is on a point
-		cf := GetFigPos()                   // current figureposition
+		cf := GetFigPos()                             // current figureposition
 		nf := AddPoints(cf, Direction(getLastPath())) // potential new figureposition
 		if Surface[nf.Y][nf.X].point && Surface[nf.Y][nf.X].box != EMPTY && !ignoredDir {
 			I("Do not moving a box from a point")
@@ -260,7 +260,7 @@ func addToPath(dir int8) {
 
 //returns and deletes the ignored direction if there was a direction ignored in this DirType, -1 if not
 func getIgnoreOfPath() int8 {
-	if len(path[len(path)-1].ignored)==0 {
+	if len(path[len(path)-1].ignored) == 0 {
 		return -1
 	}
 	var dir = path[len(path)-1].ignored[len(path[len(path)-1].ignored)-1]

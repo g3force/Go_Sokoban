@@ -2,6 +2,12 @@ This project implements the common game sokoban with Go.
 There is no GUI, but only text output and input.
 
 What is needed?
+new: with PPA: 
+sudo add-apt-repository ppa:gophers/go
+sudo apt-get update
+sudo apt-get install golang
+
+manual:
 1. golang -> language with compiler
 http://golang.org/doc/install.html
 2. optional: godag -> dynamic,advanced compiler
@@ -10,6 +16,12 @@ http://code.google.com/p/godag/
 http://go-lang.cat-v.org/text-editors/gedit/
 
 How can you run it?
+with PPA and go-runnable:
+copy repo to $GOPATH/src/ (export GOPATH, if it does not exist)
+compile: ~> go install sokoban/game
+run: ~> game
+
+the old way:
 compile with godag in project folder: gd -o sokoban
 run: ./sokoban [-r] [-m] [-i] [-s] [-l <levelfile>] [-f <outputFrequency>] [-d <debuglevel>] [-p]
 -r to directly run the algorithm

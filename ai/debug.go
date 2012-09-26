@@ -1,4 +1,4 @@
-package sokoban
+package ai
 
 import "fmt"
 

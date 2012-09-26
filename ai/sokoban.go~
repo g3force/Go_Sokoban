@@ -1,9 +1,11 @@
-package sokoban
+package ai
 
 import (
 	"fmt"
 	"os"
 	"strings"
+	"io"
+	"log"
 )
 
 // constants for indicating what a field "contains"
@@ -239,7 +241,11 @@ func UndoStep() {
 
 // load level from specified file (relative to binary file)
 func LoadLevel(filename string) {
-	raw, _ := contents(filename)
+	raw, err := contents(filename)
+	fmt.Println(raw)
+	if err != nil {
+	  log.Fatal(err)
+	}
 	// remove the "\r" from stupid windows files...
 	raw = strings.Replace(raw, "\r", "", -1)
 	// get single lines in an array
@@ -420,7 +426,7 @@ func AddPoints(p1 Point, p2 Point) Point {
 }
 
 // read from the specified file and return whole content in a string
-func contents(filename string) (string, os.Error) {
+func contents(filename string) (string, error) {
 	f, err := os.Open(filename)
 	if err != nil {
 		return "", err
@@ -433,7 +439,7 @@ func contents(filename string) (string, os.Error) {
 		n, err := f.Read(buf[0:])
 		result = append(result, buf[0:n]...)
 		if err != nil {
-			if err == os.EOF {
+			if err == io.EOF {
 				break
 			}
 			return "", err

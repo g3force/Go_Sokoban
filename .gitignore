@@ -1,5 +1,3 @@
-*.8
 *.6
-sokoban
-*~
-sokoban.V*
+*.8
+*.out

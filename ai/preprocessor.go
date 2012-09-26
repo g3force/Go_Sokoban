@@ -1,4 +1,4 @@
-package sokoban
+package ai
 
 // check, if given point is a dead corner
 func DeadCorner(point Point) (found bool, x int8) {
