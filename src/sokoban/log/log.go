@@ -1,12 +1,12 @@
-package ai
+package log
 
 import "fmt"
 
 // 0 nothing
 // 1 Errors
 // 2 Warnings 	+ 1
-// 3 Debug 		+ 2
-// 4 Info 		+ 3
+// 3 Info 		+ 2
+// 4 Debug 		+ 3
 var DebugLevel = 4
 
 func debug(tag string, message string, args ...interface{}) {
@@ -26,13 +26,13 @@ func W(message string, args ...interface{}) {
 }
 
 func D(message string, args ...interface{}) {
-	if DebugLevel > 2 {
+	if DebugLevel > 3 {
 		debug("Debug  ", message, args...)
 	}
 }
 
 func I(message string, args ...interface{}) {
-	if DebugLevel > 3 {
+	if DebugLevel > 2 {
 		debug("Info   ", message, args...)
 	}
 }

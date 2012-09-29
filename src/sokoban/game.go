@@ -1,21 +1,24 @@
 package main
 
 import (
-	"sokoban/ai"
 	"fmt"
 	"os"
+	"sokoban/ai"
+	"sokoban/engine"
+	"sokoban/log"
 	"strconv"
-	"log"
 )
 
 func main() {
-	ai.DebugLevel = 3
+	log.DebugLevel = 3
 	runmode := false
 	single := true
 	level := "alevel"
-	ai.StraightAhead = false
+	straightAhead := false
 	outputFreq := 50000
 	printSurface := false
+
+	e := engine.NewEngine()
 
 	if len(os.Args) > 1 {
 		for i, _ := range os.Args {
@@ -27,18 +30,18 @@ func main() {
 					level = os.Args[i+1]
 				}
 			case "-i":
-				ai.PrintInfo()
+				engine.PrintInfo()
 			case "-m":
 				single = false
 			case "-d":
 				if len(os.Args) > i+1 {
 					debuglevel, err := strconv.Atoi(os.Args[i+1])
 					if err == nil {
-						ai.DebugLevel = debuglevel
+						log.DebugLevel = debuglevel
 					}
 				}
 			case "-s":
-				ai.StraightAhead = true
+				straightAhead = true
 			case "-f":
 				if len(os.Args) > i+1 {
 					of, err := strconv.Atoi(os.Args[i+1])
@@ -52,16 +55,16 @@ func main() {
 		}
 	}
 
-	ai.LoadLevel(level)
-	ai.Init()
-	log.Print("Level: " + level)
-	ai.Print()
-	//fmt.Printf("boxes: %d, points: %d\n", len(ai.GetBoxes()), len(ai.GetPoints()))
+	e.LoadLevel(level)
+	log.D("Level: " + level)
 
 	if runmode {
-		ai.Run(single, outputFreq, printSurface)
+		ai.Run(e, single, outputFreq, printSurface, straightAhead)
 		return
 	}
+	
+	// surface
+	e.Print()
 
 	var choice string
 	for {
@@ -69,7 +72,7 @@ func main() {
 		fmt.Print("Press m for manual or r for run: ")
 		fmt.Scanf("%s", &choice)
 		if choice == "r" {
-			ai.Run(single, outputFreq, printSurface)
+			ai.Run(e, single, outputFreq, printSurface, straightAhead)
 			break
 		} else if choice == "m" {
 			fmt.Println("Manual mode")
@@ -77,15 +80,14 @@ func main() {
 			for {
 				fmt.Scanf("%d", &input)
 				if input >= 0 && input <= 3 {
-					ai.Move(int8(input))
-					ai.Print()
+					e.Move(engine.Direction(input))
+					e.Print()
 				} else {
-					ai.UndoStep()
-					ai.Print()
+					e.UndoStep()
+					e.Print()
 				}
 			}
 			break
 		}
 	}
 }
-
