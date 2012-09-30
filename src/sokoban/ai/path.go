@@ -18,6 +18,14 @@ func (path Path) Directions() []engine.Direction {
 	return pa
 }
 
+func (p *Path) Clone() (path Path) {
+	path = make([]Node,len(*p))
+	for k,v := range *p {
+		path[k] = v.Clone()
+	}
+	return
+}
+
 func (path Path) Current() *Node {
 	if len(path) > 0 {
 		return &path[len(path)-1]

@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"fmt"
 	"io"
 	"os"
 	"sokoban/log"
@@ -41,11 +40,26 @@ type Engine struct {
 	points       []Point       // Array of all points
 	boxes        map[int8]*Box // Array of all boxes
 	boxesOrdered map[int8]*Box
+	Id 				int
 }
 
 func NewEngine() (e Engine) {
 	e.boxes = map[int8]*Box{}
 	e.boxesOrdered = map[int8]*Box{}
+	return
+}
+
+func (e *Engine) Clone() (ne Engine) {
+	ne = NewEngine()
+	ne.Surface = e.Surface.Clone()
+	ne.History = []HistoryType{} // empty
+	ne.figPos = Point{e.FigPos().X, e.FigPos().Y}
+	ne.points = e.points // won't change
+	for k, v := range e.boxes {
+		box := v.Clone()
+    	ne.boxes[k] = &box
+    	ne.boxesOrdered[box.Order] = &box
+	}
 	return
 }
 
@@ -75,6 +89,18 @@ func (surface Surface) AmountOfFields() (fields int, dead int8) {
 	return
 }
 
+func (surface *Surface) Clone() (ns Surface) {
+	// create new array (rows)
+	ns = make([][]Field, len(*surface))
+	// add rows
+	for y:=0 ; y < len(*surface) ; y++ {
+		row := make([]Field, len((*surface)[y]))
+		copy(row, (*surface)[y])
+		ns[y] = row
+	}
+	return
+}
+
 /* try moving figure in specified direction.
  * Returns, if figure was moved and if figure moved a box.
  */
@@ -84,29 +110,29 @@ func (e *Engine) Move(dir Direction) (success bool, boxMoved int8) {
 	cf := e.FigPos()          // current figureposition
 	nf := cf.Add(dir.Point()) // potential new figureposition
 	if !e.Surface.In(nf) {
-		log.D("Can not move: surface border")
+		log.D(e.Id,"Can not move: surface border")
 		return
 	}
 	// check type of field of new figureposition
 	switch f := e.Surface[nf.Y][nf.X]; {
 	case f.Wall == true:
-		log.D("Can not move: wall")
+		log.D(e.Id,"Can not move: wall")
 		return
 	case f.Box != EMPTY: // if box
 		nnf := nf.Add(dir.Point()) // potential new boxposition
 		if !e.Surface.In(nnf) {
-			log.D("Can not move: blocked box (surface border)")
+			log.D(e.Id,"Can not move: blocked box (surface border)")
 			return
 		}
 		if e.Surface[nnf.Y][nnf.X].Dead {
-			log.D("Can not move: Dead field")
+			log.D(e.Id,"Can not move: Dead field")
 			return
 		}
 		if e.Surface[nnf.Y][nnf.X].Wall || e.Surface[nnf.Y][nnf.X].Box != EMPTY {
-			log.D("Can not move: blocked box")
+			log.D(e.Id,"Can not move: blocked box")
 			return
 		}
-		log.D("Move box")
+		log.D(e.Id,"Move box")
 		boxMoved = f.Box
 		e.boxes[f.Box].SetPos(nnf) // nnf is position that box should move to, f.Box is current box
 		e.reOrderBoxes(f.Box, dir)
@@ -123,7 +149,7 @@ func (e *Engine) Move(dir Direction) (success bool, boxMoved int8) {
 		e.figPos = nf // refresh figureposition
 		success = true
 	default:
-		log.E("Unknown field")
+		log.E(e.Id,"Unknown field")
 	}
 	return
 }
@@ -249,7 +275,7 @@ func (e *Engine) LoadLevel(filename string) {
 				field = Field{false, true, false, EMPTY}
 				e.figPos = NewPoint(x, y)
 			default:
-				log.E("Unknown character in level file: '%c'", char)
+				log.E(e.Id,"Unknown character in level file: '%c'", char)
 			}
 			e.Surface[y] = append(e.Surface[y], field)
 			if field.Point {
@@ -283,42 +309,45 @@ func (e *Engine) Won() bool {
 
 // print the current Surface
 func (e *Engine) Print() {
+	log.Lock <- 1
 	var x, y int8
 	for y = 0; y < int8(len(e.Surface)); y++ {
+		log.A("%3d ", e.Id)
 		for x = 0; x < int8(len(e.Surface[y])); x++ {
 			switch field := e.Surface[y][x]; {
 			case field.Wall:
-				fmt.Print("#")
+				log.A("#")
 			case e.figPos.X == x && e.figPos.Y == y:
 				if field.Point {
-					fmt.Print("+")
+					log.A("+")
 				} else {
-					fmt.Print("x")
+					log.A("x")
 				}
 			case field.Box == EMPTY:
 				if field.Point {
-					fmt.Print("*")
+					log.A("*")
 				} else if field.Dead {
-					fmt.Print("☠")
+					log.A("☠")
 				} else {
-					fmt.Print(" ")
+					log.A(" ")
 				}
 			default: // field has box
 				if field.Point {
-					fmt.Print("%")
+					log.A("%%")
 				} else {
-					fmt.Print("$")
+					log.A("$")
 				}
 			}
-			fmt.Print(" ")
+			log.A(" ")
 		}
-		fmt.Println()
+		log.A("\n")
 	}
 	fieldnr, deadnr := e.Surface.AmountOfFields()
-	fmt.Printf("Boxes: %d\n", len(e.Boxes()))
-	fmt.Printf("Points: %d\n", len(e.Points()))
-	fmt.Printf("Fields: %d\n", fieldnr)
-	fmt.Printf("DeadFields: %d\n", deadnr)
+	log.A("Boxes: %d\n", len(e.Boxes()))
+	log.A("Points: %d\n", len(e.Points()))
+	log.A("Fields: %d\n", fieldnr)
+	log.A("DeadFields: %d\n", deadnr)
+	<-log.Lock
 }
 
 // return Point array of all boxes and the figure
@@ -333,15 +362,17 @@ func (e *Engine) GetBoxesAndX() (field []Point) {
 
 // print a legend of the Surface output
 func PrintInfo() {
-	fmt.Println("Surface Field association:")
-	fmt.Printf("EMPTY\t\t' '\n")
-	fmt.Printf("BOX\t\t'$'\n")
-	fmt.Printf("FIGURE\t\t'x'\n")
-	fmt.Printf("EMPTY POINT\t'*'\n")
-	fmt.Printf("BOX POINT\t'%'\n")
-	fmt.Printf("FIGURE POINT\t'+'\n")
-	fmt.Printf("WALL\t\t'#'\n")
-	fmt.Printf("DEAD FIELD\t'☠'\n")
+	log.Lock <- 1
+	log.A("Surface Field association:\n")
+	log.A("EMPTY\t\t' '\n")
+	log.A("BOX\t\t'$'\n")
+	log.A("FIGURE\t\t'x'\n")
+	log.A("EMPTY POINT\t'*'\n")
+	log.A("BOX POINT\t'%'\n")
+	log.A("FIGURE POINT\t'+'\n")
+	log.A("WALL\t\t'#'\n")
+	log.A("DEAD FIELD\t'☠'\n")
+	<-log.Lock
 }
 
 // return number of boxes on the surface

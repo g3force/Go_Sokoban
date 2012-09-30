@@ -8,16 +8,16 @@ func (dir Direction) Point() Point {
 	dir = dir % 4
 	var p Point
 	switch dir {
-	case 0:
+	case 0: // right
 		p.X = 1
 		p.Y = 0
-	case 1:
+	case 1: // down
 		p.X = 0
 		p.Y = 1
-	case 2:
+	case 2: // left
 		p.X = -1
 		p.Y = 0
-	case 3:
+	case 3: // up
 		p.X = 0
 		p.Y = -1
 	}

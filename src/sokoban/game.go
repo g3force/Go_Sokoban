@@ -10,13 +10,14 @@ import (
 )
 
 func main() {
-	log.DebugLevel = 3
+	log.DebugLevel = 4
 	runmode := false
 	single := true
 	level := "alevel"
 	straightAhead := false
-	outputFreq := 50000
+	outputFreq := int32(50000)
 	printSurface := false
+	threads := 1
 
 	e := engine.NewEngine()
 
@@ -46,20 +47,29 @@ func main() {
 				if len(os.Args) > i+1 {
 					of, err := strconv.Atoi(os.Args[i+1])
 					if err == nil {
-						outputFreq = of
+						outputFreq = int32(of)
 					}
 				}
 			case "-p":
 				printSurface = true
+			case "-t":
+				if len(os.Args) > i+1 {
+					t, err := strconv.Atoi(os.Args[i+1])
+					if err != nil {
+						panic(err)
+					} else {
+						threads = t
+					}
+				}
 			}
 		}
 	}
 
 	e.LoadLevel(level)
-	log.D("Level: " + level)
+	log.I(e.Id, "Level: " + level)
 
 	if runmode {
-		ai.Run(e, single, outputFreq, printSurface, straightAhead)
+		ai.Run(e, single, outputFreq, printSurface, straightAhead, threads)
 		return
 	}
 	
@@ -69,13 +79,13 @@ func main() {
 	var choice string
 	for {
 		choice = ""
-		fmt.Print("Press m for manual or r for run: ")
+		log.A("Press m for manual or r for run: ")
 		fmt.Scanf("%s", &choice)
 		if choice == "r" {
-			ai.Run(e, single, outputFreq, printSurface, straightAhead)
+			ai.Run(e, single, outputFreq, printSurface, straightAhead, threads)
 			break
 		} else if choice == "m" {
-			fmt.Println("Manual mode")
+			log.A("Manual mode\n")
 			var input int
 			for {
 				fmt.Scanf("%d", &input)

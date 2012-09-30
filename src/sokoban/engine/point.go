@@ -23,3 +23,7 @@ func NewPoint(x int, y int) Point {
 func NewPoint8(x int8, y int8) Point {
 	return Point{x, y}
 }
+
+func (p *Point) Clone() (Point) {
+	return NewPoint8((*p).X, (*p).Y)
+}

@@ -31,6 +31,18 @@ func (node *Node) PushIgnored(dir engine.Direction) {
 	node.ignored = append(node.ignored, dir)
 }
 
+func (n *Node) Clone() (node Node) {
+	node.counter = n.counter
+	node.dir = n.dir
+	node.ignored = make([]engine.Direction, len(n.ignored))
+	for i, dir := range n.ignored {
+		node.ignored[i] = dir
+	}
+//node.ignored = 
+//	copy(node.ignored, n.ignored)
+	return
+}
+
 //returns and deletes the ignored direction if there was a direction ignored in this Node, -1 if not
 func (node *Node) PopIgnored() engine.Direction {
 	if len(node.ignored) == 0 {

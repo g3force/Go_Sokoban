@@ -84,7 +84,7 @@ func checkForDeadWall(surface engine.Surface, deadEdge engine.Point, dir int8, w
 			}
 		}
 	}
-	log.E("checkForDeadWall: end of For loop")
+	log.E(-1, "checkForDeadWall: end of For loop")
 	return false, possDead
 }
 
@@ -110,7 +110,7 @@ func markDeadWall(surface *engine.Surface, start engine.Point, end engine.Point)
 			}
 		}
 	} else {
-		log.D("Solo dead end")
+		log.D(-1, "Solo dead end")
 	}
 	return
 }
