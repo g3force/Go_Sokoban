@@ -1,8 +1,4 @@
 #!/bin/sh
 
-echo "Please make sure, you are currently in the same directory as this script!"
-export GOPATH="$GOPATH:$PWD"
-echo "GOPATH: $GOPATH"
-go test sokoban/ai
-go test sokoban/engine
-echo "done"
+go test github.com/g3force/Go_Sokoban/ai
+go test github.com/g3force/Go_Sokoban/engine

@@ -1,7 +1,7 @@
 package ai
 
 import (
-	"sokoban/engine"
+	"github.com/g3force/Go_Sokoban/engine"
 )
 
 // indicates the direction, that the figure moves to 

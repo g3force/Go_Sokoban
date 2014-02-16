@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 	"os"
-	"sokoban/ai"
-	"sokoban/engine"
-	"sokoban/log"
+	"github.com/g3force/Go_Sokoban/ai"
+	"github.com/g3force/Go_Sokoban/engine"
+	"github.com/g3force/Go_Sokoban/log"
 	"strconv"
 )
 

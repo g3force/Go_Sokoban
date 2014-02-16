@@ -1,8 +1,8 @@
 package ai
 
 import (
-	"sokoban/engine"
-	"sokoban/log"
+	"github.com/g3force/Go_Sokoban/engine"
+	"github.com/g3force/Go_Sokoban/log"
 )
 
 // check, if given point is a dead corner

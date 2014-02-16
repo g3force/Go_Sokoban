@@ -3,7 +3,7 @@ package engine
 import (
 	"io"
 	"os"
-	"sokoban/log"
+	"github.com/g3force/Go_Sokoban/log"
 	"strings"
 )
 

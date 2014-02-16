@@ -6,8 +6,9 @@ import (
 	"sync/atomic"
 	"syscall"
 	//	"unsafe"
-	"sokoban/engine"
-	"sokoban/log"
+	"github.com/g3force/Go_Sokoban/engine"
+	"github.com/g3force/Go_Sokoban/log"
+
 //	"time"
 )
 
@@ -20,29 +21,14 @@ var (
 	wg         sync.WaitGroup
 	cDone      chan int8
 	history    HistoryTree
-	cHistory chan bool
+	cHistory   chan bool
 	steps      int32
 	solutions  int32
 	solSteps   []int32
 	starttime  syscall.Timeval
 	numWorkers int
-	running bool
+	running    bool
 )
-
-//var (
-//	pointmap      = map[uint16]engine.Point{}
-//	surWidth      int8
-//)
-
-//func Init() (history *HistoryTree, path *[]DirType) {
-//	history = HistoryTree{0, nil}
-//	surWidth = int8(len(Surface[0]))
-//	for y, _ := range Surface {
-//		for x, _ := range Surface[y] {
-//			pointmap[uint16(y*int(surWidth)+x)] = NewPoint(x, y)
-//		}
-//	}
-//}
 
 func incSteps() {
 	atomic.AddInt32(&steps, 1)
@@ -59,8 +45,8 @@ func Run(e engine.Engine, single bool, outputFreq int32, printSurface bool, stra
 	numWorkers = 0
 	running = true
 	cDone = make(chan int8, threads) // queue for threads
-	cHistory = make(chan bool, 1) // mutex on global history object
-	
+	cHistory = make(chan bool, 1)    // mutex on global history object
+
 	// preprocessing
 	MarkDeadFields(&e.Surface)
 	e.Print()
@@ -69,25 +55,25 @@ func Run(e engine.Engine, single bool, outputFreq int32, printSurface bool, stra
 	syscall.Gettimeofday(&starttime)
 
 	// ???
-	runtime.GOMAXPROCS(runtime.NumCPU())
-	
+//	runtime.GOMAXPROCS(runtime.NumCPU())
+
 	// init path
 	path := Path{}
 	path.Push(engine.NO_DIRECTION)
-	
+
 	// create history store and save initial constellation
 	history = newHistoryTree(-1, -1)
 	newHist := e.GetBoxesAndX()
 	addHistory(&history, newHist)
-	
+
 	// prepare for starting workers
 	wg.Add(1)
 	cDone <- 1
 	go runWorker(e, path, threads, single, outputFreq, printSurface, straightAhead)
-	
+
 	// wait for all workers to finish
 	wg.Wait()
-//	time.Sleep(1 * time.Second)
+	//	time.Sleep(1 * time.Second)
 
 	// print result
 	min, sec, µsec := getTimePassed(starttime)
@@ -101,20 +87,20 @@ func runWorker(e engine.Engine, basePath Path, threads int, single bool, outputF
 	numWorkers++
 	log.I(gorNo, "runWorker %d created, %d running", gorNo, runtime.NumGoroutine())
 	e.Id = gorNo
-//	path := Path{basePath[len(basePath)-1].Clone()}
+	//	path := Path{basePath[len(basePath)-1].Clone()}
 	path := basePath[len(basePath)-1:]
-	
+
 	basePath = basePath[:len(basePath)-1]
-//	basePath = basePath.Clone()
-	
-//	log.I(gorNo, "path: %d, basePath: %d", path, basePath)
-	
+	//	basePath = basePath.Clone()
+
+	//	log.I(gorNo, "path: %d, basePath: %d", path, basePath)
+
 	for {
 		var ignoredDir = false
 		ignoredDir = false
 		// ### 1. check if finished
 		if path.Empty() || !running {
-			log.D(e.Id,"Empty path / stopped executition. Hopefully all possibilities tried ;)")
+			log.D(e.Id, "Empty path / stopped executition. Hopefully all possibilities tried ;)")
 			break
 		}
 		// ### 2. increase the current direction to try the next possibility
@@ -123,7 +109,7 @@ func runWorker(e engine.Engine, basePath Path, threads int, single bool, outputF
 		if path.CurrentCounter() > 3 {
 			var dir = path.Current().PopIgnored()
 			if dir == -1 {
-				log.D(e.Id,"Rotation finished. Deadlock. Backtrack.")
+				log.D(e.Id, "Rotation finished. Deadlock. Backtrack.")
 				e.UndoStep()
 				path.Pop()
 				continue
@@ -136,21 +122,21 @@ func runWorker(e engine.Engine, basePath Path, threads int, single bool, outputF
 		cf := e.FigPos()                        // current figureposition
 		nf := cf.Add(path.CurrentDir().Point()) // potential new figureposition
 		if e.Surface[nf.Y][nf.X].Point && e.Surface[nf.Y][nf.X].Box != 0 && !ignoredDir {
-			log.D(e.Id,"Do not moving a box from a point")
+			log.D(e.Id, "Do not moving a box from a point")
 			path.Current().PushIgnored(path.CurrentDir())
 			continue
 		}
 		// ### 4b. Try moving
-		log.D(e.Id,"Try moving in dir=%d", path.CurrentDir())
+		log.D(e.Id, "Try moving in dir=%d", path.CurrentDir())
 		moved, boxMoved := e.Move(path.CurrentDir())
 		if !moved {
-			log.D(e.Id,"Could not move.")
+			log.D(e.Id, "Could not move.")
 			continue
 		}
 		// ### 5. If moved, first check if not in a loop
 		newHist := e.GetBoxesAndX()
 		if everBeenHere(&history, newHist) {
-			log.D(e.Id,"I'v been here already. Backtrack: %d", newHist)
+			log.D(e.Id, "I'v been here already. Backtrack: %d", newHist)
 			e.UndoStep()
 			continue
 		}
@@ -161,7 +147,7 @@ func runWorker(e engine.Engine, basePath Path, threads int, single bool, outputF
 		} else {
 			path.Push(-1)
 		}
-		log.D(e.Id,"Moved. Path added.")
+		log.D(e.Id, "Moved. Path added.")
 		// ### 7. Do some statistics
 		incSteps()
 		if printSurface {
@@ -196,7 +182,7 @@ func runWorker(e engine.Engine, basePath Path, threads int, single bool, outputF
 			log.I(gorNo, "Creating new worker")
 			go runWorker(ne, path.Clone(), threads, single, outputFreq, printSurface, straightAhead)
 			// go back, as we deligated current dir go worker
-//			time.Sleep(3 * time.Second)
+			//			time.Sleep(3 * time.Second)
 			e.UndoStep()
 			path.Pop()
 		}
@@ -227,8 +213,8 @@ func addHistory(h *HistoryTree, boxes []engine.Point) {
 		box := boxes[i]
 		son := searchSons(h, box)
 		if son == -1 {
-			nBoxes := make([]engine.Point, len(boxes) - i)
-			for k:=i; k + i < len(boxes) ; k++ {
+			nBoxes := make([]engine.Point, len(boxes)-i)
+			for k := i; k+i < len(boxes); k++ {
 				nBoxes[k] = boxes[i+k].Clone()
 			}
 			insertNewHist(h, boxes[i:], -1)
@@ -245,12 +231,12 @@ func insertNewHist(h *HistoryTree, boxList []engine.Point, counter int8) (newHis
 		return
 	}
 	cHistory <- true
-	
+
 	newHis = newHistoryTree(boxList[counter].X, boxList[counter].Y)
 	h.sons = append(h.sons, &newHis)
 	<-cHistory // release slot
 	insertNewHist(h.sons[len(h.sons)-1], boxList, counter)
-	
+
 	return
 }
 
@@ -260,14 +246,14 @@ func newHistoryTree(x int8, y int8) HistoryTree {
 
 func searchSons(h *HistoryTree, box engine.Point) int {
 	cHistory <- true
-	
+
 	for key, value := range h.sons {
 		if value.p.X == box.X && value.p.Y == box.Y {
 			<-cHistory // release slot
 			return key
 		}
 	}
-	
+
 	<-cHistory // release slot
 	return -1
 }
